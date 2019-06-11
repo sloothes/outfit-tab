@@ -1,0 +1,814 @@
+<!-- /components/outfits-tab.html (v2.1) -->
+
+<script>
+
+(function(){
+    var component_ID = {
+        type: "tab",
+        version: "2.1",
+        kind: "component",
+        name: "outfits-tab.html",
+        description: "costumizes outfit of local player.",
+    };
+})();
+
+</script>
+
+
+        <!-- CONFING -->
+
+
+        <!-- HISTORY -->
+
+
+        <!-- COMMANDS -->
+
+
+        <!-- UNDO/REDO -->
+
+
+        <!-- PAGER -->
+
+
+        <!-- GENDER DROPLIST -->
+
+<style>
+
+    .helper a, 
+    .outfit-helper a { 
+        color:#fff; 
+        font: bold 16px Arial;
+        cursor: pointer;
+        line-height: 1.5em;
+        text-decoration: none;
+    }
+
+    .outfit-helper:focus,
+    .helper:focus { outline:none; }
+
+    .outfit-helpers a:focus,
+    .helpers a:focus { outline:none; }
+
+    .helpers-header h4 { cursor:pointer; }
+
+</style>
+
+<div class="helpers-header gender-header">
+    <h4 style="margin-bottom:30px;">
+        <span style="vertical-align:-0.5rem;">Select gender:</span>
+        <div style="display:inline-block;width:50%;float:right;">
+            <select id="gender-droplist" class="form-control gender droplist" readOnly>
+                <option value="">Select sex:</option>
+                <option value="male">male</option>
+                <option value="female">female</option>
+            </select>
+        </div>
+    </h4>
+</div>
+
+<script>
+
+(function(){
+
+    var viewer = document.getElementById("viewer");
+    var localPlayer = viewer.contentWindow.localPlayer;
+    var droplist = document.getElementById("gender-droplist");
+
+    var Signal = signals.Signal;
+    var genderChanged = new Signal();
+
+    genderChanged.add(function(cmd){
+        store("Sex", `/gender/${this.value}`);
+    });
+
+    var SetGenderCommand = function( value ){
+
+        Command.call( this );
+
+        this.type = "SetGenderCommand";
+        this.name = `Set gender to ${value || "null"}`;
+
+        this.object = localPlayer.outfit;
+        this.oldValue = localPlayer.outfit.getGender();
+
+        this.newValue = value;
+
+    };
+
+    SetGenderCommand.prototype = {
+
+        execute: function () {
+            var value = this.newValue;
+            this.object.setGender(value);
+            genderChanged.dispatch(this);
+        },
+
+        undo: function () {
+            var value = this.oldValue;
+            this.object.setGender(value);
+            genderChanged.dispatch(this);
+        },
+
+        toJSON: function () {
+
+            var output = Command.prototype.toJSON.call( this );
+
+            output.oldValue = this.oldValue;
+            output.newValue = this.newValue;
+
+            return output;
+        },
+
+        fromJSON: function ( json ) {
+
+            Command.prototype.fromJSON.call( this, json );
+
+            this.oldValue = json.oldValue;
+            this.newValue = json.newValue;
+            this.object = localPlayer.outfit;
+
+            if ( this.object == undefined ) {
+                throw "local player not found!";
+            }
+
+        },
+
+    };
+
+    $(droplist).on("change", function(){
+        if ( !this.value ) return;
+    //  OutfitHistory.execute( new SetGenderCommand(this.value) );
+        store("Sex", `/gender/${this.value}`);
+    });
+
+})();
+
+</script>
+
+
+
+        <!-- OUTFIT HELPERS -->
+
+
+<div class="helpers-header outfit-header">
+    <h4>Outfit helpers:</h4>
+</div>
+
+<div id="outfit-helpers" class="tab-content">
+
+    <div id="male-outfit-helpers" class="outfit-helpers component-pane tab-pane fade">
+        <li class="outfit-helper male body hidden"><a>Body</a></li>
+        <li class="outfit-helper male eyes hidden"><a>Eyes</a></li>
+        <li class="outfit-helper male hairs"><a>Hairs</a></li>
+        <li class="outfit-helper male underwears"><a>Underwears</a></li>
+        <li class="outfit-helper male costume"><a>Costume</a></li>
+        <li class="outfit-helper male tshirt"><a>TShirt</a></li>
+        <li class="outfit-helper male trousers"><a>Trousers</a></li>
+        <li class="outfit-helper male shoes"><a>Shoes</a></li>
+        <li class="outfit-helper male skeleton hidden"><a>Skeleton</a></li>
+    </div>
+
+    <div id="female-outfit-helpers" class="outfit-helpers component-pane tab-pane fade">
+        <li class="outfit-helper female body hidden"><a>Body</a></li>
+        <li class="outfit-helper female eyes hidden"><a>Eyes</a></li>
+        <li class="outfit-helper female hairs"><a>Hairs</a></li>
+        <li class="outfit-helper female stockings"><a>Stockings</a></li>
+        <li class="outfit-helper female underwears"><a>Underwears</a></li>
+        <li class="outfit-helper female dress"><a>Dress</a></li>
+        <li class="outfit-helper female costume"><a>Costume</a></li>
+        <li class="outfit-helper female tshirt hidden"><a>TShirt</a></li>
+        <li class="outfit-helper female trousers"><a>Trousers</a></li>
+        <li class="outfit-helper female shoes"><a>Shoes</a></li>
+        <li class="outfit-helper female skeleton hidden"><a>Skeleton</a></li>
+    </div>
+</div>
+
+<hr/>
+
+        <!-- COSTUMIZE OUTFIT -->
+
+<style>
+
+    #outfits-catalog {
+        max-width:475px;
+        max-height:660px;
+        color:#fff;
+        border:none;
+        padding:0px;
+        background-color:#fff0;
+    }
+
+    .catalog-item {
+        width:85px;
+        height:85px;
+        margin:4px;
+        background-size: contain;
+        background-position:50% 50%;
+        background-repeat:no-repeat;
+    }
+
+    .btn-white-outline {
+        background-color:#0000;
+        color:#fff;
+        border-color:#fff;
+    }
+
+    #display-object {
+        /*  min-height:372px; */
+        padding:0px;
+        margin:0px;
+        color:#fff;
+        text-align:center;
+    }
+
+    .page-btn {
+        max-width:45px;
+        padding:6px 10px;
+    }
+
+    .helpers-header h3 { cursor:pointer; }
+
+</style>
+
+<div class="helpers-header costume-header" style="margin-bottom:20px;">
+    <h3>Texturize your outfit:</h3>
+</div>
+
+<div id="costume-helpers" class="tab-content">
+
+        <!-- OUTFIT COSTUME DROPLIST -->
+
+    <div>
+        <h4 style="margin-bottom:30px;">
+            <span style="vertical-align:-0.5rem;">Select outfit item:</span>
+            <div style="display:inline-block;width:50%;float:right;">
+                <select id="outfit-slot-droplist" class="form-control outfit helper slots" readOnly>
+                    <option value="">Select slot:</option>
+                    <option value="body">body</option>
+                    <option value="eyes">eyes</option>
+                    <option value="hairs">hairs</option>
+                    <option value="stockings">stockings</option>
+                    <option value="underwears">underwears</option>
+                    <option value="tshirt">tshirt</option>
+                    <option value="trousers">trousers</option>
+                    <option value="dress">dress</option>
+                    <option value="costume">costume</option>
+                    <option value="shoes">shoes</option>
+                </select>
+            </div>
+        </h4>
+    </div>
+
+        <!-- CATALOGUE - PAGINATOR -->
+
+    <div id="outfits-catalog" class="well">
+
+        <h4>Choose texture:
+            <div id="itmcount" class="pull-right small" style="margin-top:4px;color:#ddd;">
+                <span id="from">zero</span>
+                to <span id="upto">zero</span>
+                of <span id="count">none</span>
+            </div>
+        </h4>
+
+        <div class="pager">
+            <div style="margin:10px 0px 10px;">
+                <li class="btn btn-primary get-prev-btn pull-left">&#9668;</li>
+                <div class="pager-buttons-holder" style="display:inline;">
+                    <a class="btn btn-default page-btn">1</a>
+                    <a class="btn btn-default page-btn">2</a>
+                    <a class="btn btn-default page-btn">3</a>
+                    <a class="btn btn-default page-btn">4</a>
+                </div>
+                <li class="btn btn-primary get-next-btn pull-right">&#9658;</li>
+            </div>
+
+            <div id="display-object" class="panel-container"></div>
+
+            <div style="margin:10px 0px 20px;">
+                <li class="btn btn-primary btn-white-outline first-page-btn pull-left" style="margin-right:5px;">First</li>
+                <li class="btn btn-primary btn-white-outline get-prev-group-btn pull-left">&#9668;&#9668;</li>
+                <li class="btn btn-primary btn-white-outline last-page-btn pull-right" style="margin-left:5px;">Last</li>
+                <li class="btn btn-primary btn-white-outline get-next-group-btn pull-right">&#9658;&#9658;</li>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<hr/>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+/*
+(function(){
+
+    const catalogSelector = "#outfits-catalog";
+    const displayObjectSelector = "#display-object";
+    const genderDroplistSelector = "#gender-droplist";
+    const outfitDroplistSelector = "#outfit-slot-droplist";
+
+    var pagerOptions = {
+        fields: {},
+        selectors: {},
+        collection: "",
+        sort: {_id: -1 },
+        skip:  0, // pager.skip,
+        limit: 9, // pager.limit,
+    };
+
+    var pager = new Pager(
+        catalogSelector, 
+        pagerOptions.limit, 
+        pagerOptions, 
+        pagerChanged, 
+        pageChanged
+    );
+
+    debugMode && console.log("pager:", pager);
+
+    pagerChanged.add(function(command){
+
+        pager.reset(); // important!
+        pager.options.skip = 0; // imporant!
+        pageChanged.dispatch();
+
+    });
+
+    pageChanged.add(async function(command){
+
+        var kind = "texture";
+        var slot = $(outfitDroplistSelector).val();
+        var gender = localPlayer.outfit.getGender();
+
+    //  Current db.version: 3
+        pager.options.selectors = {
+
+            kind:   kind,
+            slot:   slot,
+            gender: gender,
+
+        };
+
+        pager.options.collection = slot; 
+        debugMode && console.log( "options:", JSON.parse( JSON.stringify(pager.options) ) );
+
+        pager.init();
+
+        function resetPager( msg ){
+            pager.reset(); // important!
+            pager.options.skip = 0; // imporant!
+            $(pager.from).text( "zero" );
+            $(pager.upto).text( "zero" );
+            $(pager.counter).text("none");
+            $(displayObjectSelector).html( msg );
+            return;
+        }
+
+        if ( !gender ) 
+            return resetPager( `<h2>no gender!</h2>` );
+        if ( !slot ) 
+            return resetPager( `<h2>no outfit!</h2>` );
+        if ( !db._cols[ slot ] ) 
+            return resetPager( `<h2>no collection!</h2>` );
+
+        var items = await pager.get_items();
+
+        if ( items == undefined || items.length == 0 ) {
+            return resetPager( `<h2>no items!</h2>` );
+        }
+
+        $(pager.from).text( pager.options.skip + 1 );
+        $(pager.upto).text( pager.options.skip + items.length );
+
+        $(displayObjectSelector).children().remove(); // important!
+
+        var template = `<div class="btn btn-default btn-white-outline catalog-item texture-item"></div>`;
+
+        items.forEach(function( doc ){
+
+            var element = $(template).get(0);
+
+            element.id    = doc._id;
+            element.title = doc.title;
+
+            if ( doc.thumbnail ) {
+                element.style["background-image"] = `url(${doc.thumbnail})`;
+            } else {
+                element.style["background-image"] = `url(/img/no-image-avaliable-200x200.png)`;
+            }
+
+            $(element).on("click", function(){
+                clearTimeout(this.timeout);
+
+                this.timeout = setTimeout( function(){
+
+                //  Get current state.
+                    var gender = localPlayer.outfit.getGender();
+                    var helper = $(outfitDroplistSelector).val();
+                    var selector = `.outfit-helper.${gender}.${helper}`;
+                //  Get current material.
+                    var mesh = $(selector).get(0).cache;
+                    var material = $(selector).get(0).cache.material;
+                //  Get current texture.
+                    var map = doc.type;
+                    var texture = material[ map ];
+                    debugMode && console.log(map, texture);
+
+                    var state = {
+                        doc: doc,
+                        map: map,
+                        gender: gender,
+                        selector: selector,
+                        material: material,
+                        texture: texture,
+                    };
+
+                    OutfitHistory.execute( new SetOutfitItemTextureCommand(state) );
+
+                }, 250 );
+
+            });
+
+            $(displayObjectSelector).append( element );
+            
+        });
+
+        pager.count(); // important!
+
+    });
+
+    $(outfitDroplistSelector).on("change", function(){
+        pagerChanged.dispatch();
+    });
+
+    var slotDroplist = $(outfitDroplistSelector).get(0);
+    var pagerButtons = $(catalogSelector).find(".page-btn");
+    debugMode && console.log(pagerButtons);
+
+    $(pager.firstPageButton).on("click", function(){
+        if ( !slotDroplist.value ) return;
+        pager.first();
+    });
+
+    $(pager.lastPageButton).on("click", function(){
+        if ( !slotDroplist.value ) return;
+        pager.last();
+    });
+
+    $(pager.nextPageButton).on("click", function(){
+        if ( !slotDroplist.value ) return;
+        pager.next();
+    });
+
+    $(pager.prevPageButton).on("click", function(){
+        if ( !slotDroplist.value ) return;
+        pager.prev();
+    });
+
+    $(pager.nextGroupButton).on("click", function(){
+        if ( !slotDroplist.value ) return;
+        pager.next(pagerButtons.length);
+    });
+
+    $(pager.prevGroupButton).on("click", function(){
+        if ( !slotDroplist.value ) return;
+        pager.prev(pagerButtons.length);
+    });
+
+    pagerButtons.toArray().forEach( function( currentButton ){
+        $(currentButton).on("click", function(){
+            if ( !slotDroplist.value ) return;
+            pager.click( this );
+        });
+    });
+
+})();
+*/
+</script>
+
+        <!-- INITIALIZE OUTFIT HELPERS -->
+
+<script>
+/*
+$(function(){
+
+    const outfitGenderSelector = "#gender-droplist";
+    const outfitHelperSelector = ".outfit-helper";
+    const outfitHelpersTabSelector = ".outfit-helpers.component-pane.tab-pane";
+    const maleOutfitHelpersSelector = "#male-outfit-helpers";
+    const femaleOutfitHelpersSelector = "#female-outfit-helpers";
+
+    $(outfitGenderSelector).on("change", function(){
+        $(outfitHelpersTabSelector).removeClass("in active");
+
+        if (this.value == "male")
+            $(maleOutfitHelpersSelector).addClass("in active");
+        else if (this.value == "female")
+            $(femaleOutfitHelpersSelector).addClass("in active");
+    });
+
+    var Signal = signals.Signal;
+    var started = new Signal();
+    var initilized = new Signal();
+    
+//  Event listener.
+
+    started.addOnce(function(gender){
+        $(outfitHelpersTabSelector).removeClass("in active");
+
+        if (gender == "male")
+            $(maleOutfitHelpersSelector).addClass("in active");
+        else if (gender == "female")
+            $(femaleOutfitHelpersSelector).addClass("in active");
+
+        $(outfitGenderSelector).val( gender );
+        localPlayer.outfit.setGender( gender );
+
+    });
+
+//  Event listener.
+
+    initilized.add(function(options){
+
+    //  INIT OUTFIT HELPER OPTIONS:
+    //    name: "skeleton",                            // helper name.
+    //    slot: "body",                                // outfit slot.
+    //    geometry: "skeleton",                        // geometry _id.
+    //    material: "HF_SkeletonMaterial",             // material _id.
+    //    selector: ".outfit-helper.female.skeleton",  // helper selector.
+    //    collection: "female",                        // collection name.
+
+        var gender = store("gender");
+        var domElement = $(options.selector).get(0);
+        var collection = db.collection(options.collection);
+
+        var selectors = {
+            geometry: {_id:options.geometry},
+            material: {_id:options.material}
+        };
+
+    //  domElement.value = false;
+        domElement.slot  = options.slot;
+        domElement.name  = options.name;
+
+        collection.findOne( selectors.geometry ).then(function(json){
+
+            if ( !json ) throw `No data returned for ${collection.name} ${options.geometry}.`;
+
+            var loader = new THREE.JSONLoader();
+            return loader.parse( json );
+
+        }).then(function(object){
+
+            if ( !object ) throw `No object returned for ${collection.name} ${options.geometry}.`;
+
+            var geometry = object.geometry;
+            geometry.computeFaceNormals();
+            geometry.computeVertexNormals();
+            geometry.computeBoundingBox();
+            geometry.computeBoundingSphere();
+
+            return db.collection("materials").findOne(selectors.material, function(err){
+                if (err) throw err;
+            }).then(function( json ){
+
+                if (json) {
+
+                    var material = materialfromJSON( json );
+
+                } else {
+
+                    var material = new THREE.MeshStandardMaterial({skinning:true});
+                }
+
+                return new THREE.SkinnedMesh( geometry, material );
+
+            }).catch(function(err){
+                console.error(err);
+            });
+
+        }).then(function(skinned){
+
+            skinned.renderDepth = 1;
+            skinned.frustumCulled = false; // important!
+            skinned.scale.set( 1, 1, 1 );
+            skinned.position.set( 0, 0, 0 );
+            skinned.rotation.set( 0, 0, 0 ); 
+
+            domElement.cache = skinned;
+            debugMode && console.dir(domElement);
+
+            if ( store(gender) && store(gender).filter(function(selector){ 
+                return selector == options.selector; 
+            }).length ) {
+                $(domElement).find("a").text(`Remove ${domElement.name}`);
+                localPlayer.outfit.add( {[domElement.slot]: domElement.cache} );
+            } else {
+                $(domElement).find("a").text(`Add ${domElement.name}`);
+            }
+
+        }).catch(function(err){
+            console.error(err);
+        });
+
+    });
+
+//  Dispatch events.
+
+    //  Female.
+
+    initilized.dispatch({
+        name: "skeleton",                            // helper name.
+        slot: "body",                                // outfit slot.
+        geometry: "skeleton",                        // geometry _id.
+        material: "HF_SkeletonMaterial",             // material _id.
+        selector: ".outfit-helper.female.skeleton",  // helper selector.
+        collection: "female",                        // collection name.
+    });
+
+    initilized.dispatch({
+        name: "body",
+        slot: "body",
+        geometry: "body",
+        material: "HF_SkinMaterial",
+        selector: ".outfit-helper.female.body",
+        collection: "female",
+    });
+
+    initilized.dispatch({
+        name: "eyes",
+        slot: "eyes",
+        geometry: "eyes",
+        material: "HF_EyesMaterial",
+        selector: ".outfit-helper.female.eyes",
+        collection: "female",
+    });
+
+    initilized.dispatch({
+        name: "hairs",
+        slot: "hairs",
+        geometry: "hairs",
+        material: "HF_HairsMaterial",
+        selector: ".outfit-helper.female.hairs",
+        collection: "female",
+    });
+
+    initilized.dispatch({
+        name: "underwears",
+        slot: "underwears",
+        geometry: "underwears",
+        material: "HF_UnderwearsMaterial",
+        selector: ".outfit-helper.female.underwears",
+        collection: "female",
+    });
+
+    initilized.dispatch({
+        name: "stockings",
+        slot: "stockings",
+        geometry: "stockings",
+        material: "HF_StockingsMaterial",
+        selector: ".outfit-helper.female.stockings",
+        collection: "female",
+    });
+
+    initilized.dispatch({
+        name: "dress",
+        slot: "costume",
+        geometry: "dress",
+        material: "HF_DressMaterial",
+        selector: ".outfit-helper.female.dress",
+        collection: "female",
+    });
+
+    initilized.dispatch({
+        name: "costume",
+        slot: "costume",
+        geometry: "uniform",
+        material: "HF_UniformMaterial",
+        selector: ".outfit-helper.female.costume",
+        collection: "female",
+    });
+
+    initilized.dispatch({
+        name: "trousers",
+        slot: "trousers",
+        geometry: "jeans",
+        material: "HF_JeansMaterial",
+        selector: ".outfit-helper.female.trousers",
+        collection: "female",
+    });
+
+    initilized.dispatch({
+        name: "shoes",
+        slot: "shoes",
+        geometry: "heels",
+        material: "HF_SandalsMaterial",
+        selector: ".outfit-helper.female.shoes",
+        collection: "female",
+    });
+
+    //  Male. 
+
+    initilized.dispatch({
+        name: "skeleton",
+        slot: "body",
+        geometry: "skeleton",
+        material: "HF_SkeletonMaterial",
+        selector: ".outfit-helper.male.skeleton",
+        collection: "male",
+    });
+
+    initilized.dispatch({
+        name: "body",
+        slot: "body",
+        geometry: "body",
+        material: "HM_SkinMaterial",
+        selector: ".outfit-helper.male.body",
+        collection: "male",
+    });
+
+    initilized.dispatch({
+        name: "eyes",
+        slot: "eyes",
+        geometry: "eyes",
+        material: "HM_EyesMaterial",
+        selector: ".outfit-helper.male.eyes",
+        collection: "male",
+    });
+
+    initilized.dispatch({
+        name: "hairs",
+        slot: "hairs",
+        geometry: "hairs",
+        material: "HM_HairsMaterial",
+        selector: ".outfit-helper.male.hairs",
+        collection: "male",
+    });
+
+    initilized.dispatch({
+        name: "underwears",
+        slot: "underwears",
+        geometry: "underwears",
+        material: "HM_UnderwearsMaterial",
+        selector: ".outfit-helper.male.underwears",
+        collection: "male",
+    });
+
+    initilized.dispatch({
+        name: "costume",
+        slot: "costume",
+        geometry: "uniform",
+        material: "HM_UniformMaterial",
+        selector: ".outfit-helper.male.costume",
+        collection: "male",
+    });
+
+    initilized.dispatch({
+        name: "trousers",
+        slot: "trousers",
+        geometry: "jeans",
+        material: "HM_JeansMaterial",
+        selector: ".outfit-helper.male.trousers",
+        collection: "male",
+    });
+
+    initilized.dispatch({
+        name: "shoes",
+        slot: "shoes",
+        geometry: "sneakers",
+        material: "HM_SneakersMaterial",
+        selector: ".outfit-helper.male.shoes",
+        collection: "male",
+    });
+
+    initilized.removeAll();
+
+    started.dispatch( store("gender") );
+
+});
+*/
+</script>
+
