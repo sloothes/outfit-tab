@@ -1,0 +1,289 @@
+<script>
+
+(function(){
+    var component_ID = {
+        type: "tab",
+        version: "2.1",
+        kind: "component",
+        name: "outfits-tab.html",
+        description: "costumizes outfit of local player.",
+    };
+})();
+
+</script>
+
+<style>
+
+    .helper a, 
+    .outfit-helper a { 
+        color:#fff; 
+        font: bold 16px Arial;
+        cursor: pointer;
+        line-height: 1.5em;
+        text-decoration: none;
+    }
+
+    .outfit-helper:focus,
+    .helper:focus { outline:none; }
+
+    .outfit-helpers a:focus,
+    .helpers a:focus { outline:none; }
+
+    .helpers-header h4 { cursor:pointer; }
+
+</style>
+
+<div class="helpers-header gender-header">
+    <h4 style="margin-bottom:30px;">
+        <span style="vertical-align:-0.5rem;">Select gender:</span>
+        <div style="display:inline-block;width:50%;float:right;">
+            <select id="gender-droplist" class="form-control gender droplist" readOnly>
+                <option value="">Select sex:</option>
+                <option value="/gender/male">male</option>
+                <option value="/gender/female">female</option>
+            </select>
+        </div>
+    </h4>
+</div>
+
+<script>
+
+(function(){
+
+    const viewer = document.getElementById("viewer");
+    const droplist = document.getElementById("gender-droplist");
+
+    const outfitHelpersTabSelector = ".outfit-helpers.component-pane.tab-pane";
+    const maleOutfitHelpersSelector = "#male-outfit-helpers";
+    const femaleOutfitHelpersSelector = "#female-outfit-helpers";
+
+    var Signal = signals.Signal;
+    var genderChanged = new Signal();
+
+    genderChanged.add(function(data){
+
+        $(outfitHelpersTabSelector).removeClass("in active");
+
+        if ( window.socket ) {
+
+            socket.publish(localPlayerChannel, data, function(err){
+
+                if (err) console.error(err);
+
+                if ( data == "/gender/male" ) 
+                    $(maleOutfitHelpersSelector).addClass("in active");
+
+                if ( data == "/gender/female" )
+                    $(femaleOutfitHelpersSelector).addClass("in active");
+
+            });
+
+        } else {
+
+            viewer.contentWindow.localPlayerHandler(data);
+
+            if ( data == "/gender/male" ) 
+                $(maleOutfitHelpersSelector).addClass("in active");
+
+            if ( data == "/gender/female" )
+                $(femaleOutfitHelpersSelector).addClass("in active");
+
+        }
+
+    });
+
+    $(droplist).on("change", function(){
+        genderChanged.dispatch( this.value );
+        if (this.value) store( "Sex", this.value );
+    });
+
+})();
+
+</script>
+
+<div class="helpers-header outfit-header">
+    <h4>Outfit helpers:</h4>
+</div>
+
+<div id="outfit-helpers" class="tab-content">
+
+    <div id="male-outfit-helpers" class="outfit-helpers component-pane tab-pane fade">
+        <li class="outfit-helper male body hidden"><a>Body</a></li>
+        <li class="outfit-helper male eyes hidden"><a>Eyes</a></li>
+        <li class="outfit-helper male hairs"><a>Hairs</a></li>
+        <li class="outfit-helper male underwears"><a>Underwears</a></li>
+        <li class="outfit-helper male costume"><a>Costume</a></li>
+        <li class="outfit-helper male tshirt"><a>TShirt</a></li>
+        <li class="outfit-helper male trousers"><a>Trousers</a></li>
+        <li class="outfit-helper male shoes"><a>Shoes</a></li>
+        <li class="outfit-helper male skeleton hidden"><a>Skeleton</a></li>
+    </div>
+
+    <div id="female-outfit-helpers" class="outfit-helpers component-pane tab-pane fade">
+        <li class="outfit-helper female body hidden"><a>Body</a></li>
+        <li class="outfit-helper female eyes hidden"><a>Eyes</a></li>
+        <li class="outfit-helper female hairs"><a>Hairs</a></li>
+        <li class="outfit-helper female stockings"><a>Stockings</a></li>
+        <li class="outfit-helper female underwears"><a>Underwears</a></li>
+        <li class="outfit-helper female dress"><a>Dress</a></li>
+        <li class="outfit-helper female costume"><a>Costume</a></li>
+        <li class="outfit-helper female tshirt hidden"><a>TShirt</a></li>
+        <li class="outfit-helper female trousers"><a>Trousers</a></li>
+        <li class="outfit-helper female shoes"><a>Shoes</a></li>
+        <li class="outfit-helper female skeleton hidden"><a>Skeleton</a></li>
+    </div>
+</div>
+
+<hr/>
+
+<script>
+
+(function(){
+
+    const outfitHeaderSelector = ".outfit-header";
+    const helpersHeaderSelector = ".helpers-header";
+    const outfitHelpersSelector = "#outfit-helpers";
+
+    var Signal = signals.Signal;
+    var dblclicked = new Signal();
+
+//  Event handlers.
+    function onDoubleClickEventHandler( element ){
+        if ( $(element).css("display") == "none" ) {
+            $(element).slideDown();
+        } else {
+            $(element).slideUp();
+        }
+    }
+
+//  Event listeners.
+    dblclicked.add(onDoubleClickEventHandler);
+
+//  Dispatch events.
+    $(outfitHeaderSelector).on("dblclick", function(){
+        dblclicked.dispatch( $(outfitHelpersSelector).get(0) );
+    });
+
+})();
+
+</script>
+
+<script>
+
+(function(){
+
+    var interval, msec = 250;
+
+    const viewer = document.getElementById("viewer");
+
+    var Signal = signals.Signal;
+    var outfitHelperClicked = new Signal();
+
+    outfitHelperClicked.add(function(data){
+
+        if ( window.socket ) 
+            socket.publish(localPlayerChannel, data);
+        else 
+            viewer.contentWindow.localPlayerHandler(data);
+
+        store( "Outfit", data );
+
+    });
+
+    $(".outfit-helper.body").on("click", function (){
+        clearTimeout(interval);
+        interval = setTimeout(function(){
+            outfitHelperClicked.dispatch("/outfit/body");
+        }, msec);
+    });
+
+    $(".outfit-helper.eyes").on("click", function (){
+        clearTimeout(interval);
+        interval = setTimeout(function(){
+            outfitHelperClicked.dispatch("/outfit/eyes");
+        }, msec);
+    });
+
+    $(".outfit-helper.hairs").on("click", function (){
+        clearTimeout(interval);
+        interval = setTimeout(function(){
+            outfitHelperClicked.dispatch("/outfit/hairs");
+        }, msec);
+    });
+
+    $(".outfit-helper.stockings").on("click", function (){
+        clearTimeout(interval);
+        interval = setTimeout(function(){
+            outfitHelperClicked.dispatch("/outfit/stockings");
+        }, msec);
+    });
+
+    $(".outfit-helper.underwears").on("click", function (){
+        clearTimeout(interval);
+        interval = setTimeout(function(){
+            outfitHelperClicked.dispatch("/outfit/underwears");
+        }, msec);
+    });
+
+    $(".outfit-helper.dress").on("click", function (){
+        clearTimeout(interval);
+        interval = setTimeout(function(){
+            outfitHelperClicked.dispatch("/outfit/dress");
+        }, msec);
+    });
+
+    $(".outfit-helper.costume").on("click", function (){
+        clearTimeout(interval);
+        interval = setTimeout(function(){
+            outfitHelperClicked.dispatch("/outfit/costume");
+        }, msec);
+    });
+
+    $(".outfit-helper.tshirt").on("click", function (){
+        clearTimeout(interval);
+        interval = setTimeout(function(){
+            outfitHelperClicked.dispatch("/outfit/tshirt");
+        }, msec);
+    });
+
+    $(".outfit-helper.trousers").on("click", function (){
+        clearTimeout(interval);
+        interval = setTimeout(function(){
+            outfitHelperClicked.dispatch("/outfit/trousers");
+        }, msec);
+    });
+
+    $(".outfit-helper.shoes").on("click", function (){
+        clearTimeout(interval);
+        interval = setTimeout(function(){
+            outfitHelperClicked.dispatch("/outfit/shoes");
+        }, msec);
+    });
+
+})();
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
