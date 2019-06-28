@@ -113,7 +113,7 @@
         <li class="outfit-helper male hairs"><a>Hairs</a></li>
         <li class="outfit-helper male underwears"><a>Underwears</a></li>
         <li class="outfit-helper male costume"><a>Costume</a></li>
-        <li class="outfit-helper male tshirt hidden"><a>TShirt</a></li>
+        <li class="outfit-helper male tshirt"><a>TShirt</a></li>
         <li class="outfit-helper male trousers"><a>Trousers</a></li>
         <li class="outfit-helper male shoes"><a>Shoes</a></li>
         <li class="outfit-helper male skeleton hidden"><a>Skeleton</a></li>
@@ -125,10 +125,10 @@
         <li class="outfit-helper female hairs"><a>Hairs</a></li>
         <li class="outfit-helper female stockings"><a>Stockings</a></li>
         <li class="outfit-helper female underwears"><a>Underwears</a></li>
-        <li class="outfit-helper female dress"><a>Dress</a></li>
         <li class="outfit-helper female costume"><a>Costume</a></li>
-        <li class="outfit-helper female tshirt hidden"><a>TShirt</a></li>
+        <li class="outfit-helper female tshirt"><a>TShirt</a></li>
         <li class="outfit-helper female trousers"><a>Trousers</a></li>
+        <li class="outfit-helper female dress"><a>Dress</a></li>
         <li class="outfit-helper female shoes"><a>Shoes</a></li>
         <li class="outfit-helper female skeleton hidden"><a>Skeleton</a></li>
     </div>
@@ -225,13 +225,6 @@
         }, msec);
     });
 
-    $(".outfit-helper.dress").on("click", function (){
-        clearTimeout(interval);
-        interval = setTimeout(function(){
-            outfitHelperClicked.dispatch("/outfit/dress");
-        }, msec);
-    });
-
     $(".outfit-helper.costume").on("click", function (){
         clearTimeout(interval);
         interval = setTimeout(function(){
@@ -253,6 +246,13 @@
         }, msec);
     });
 
+    $(".outfit-helper.dress").on("click", function (){
+        clearTimeout(interval);
+        interval = setTimeout(function(){
+            outfitHelperClicked.dispatch("/outfit/dress");
+        }, msec);
+    });
+
     $(".outfit-helper.shoes").on("click", function (){
         clearTimeout(interval);
         interval = setTimeout(function(){
@@ -263,27 +263,4 @@
 })();
 
 </script>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
