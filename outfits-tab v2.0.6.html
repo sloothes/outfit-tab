@@ -1,0 +1,4253 @@
+<!-- /components/outfits-tab.html (v2.0.6) -->
+
+<script>
+
+(function(){
+    var component_ID = {
+        type: "tab",
+        version: "2.0.6",
+        kind: "component",
+        name: "outfits-tab.html",
+        description: "costumizes outfit of local player.",
+        changeLog:[
+            "Brand new code using signals.js",
+            "Every outfit has a single material.",
+            "Multimaterial is not used any more.",
+            "Body has seperated to eyes and body.",
+            "Outfit helpers not need to have value.",
+            "Outfit helpers handled direct from",
+            "localPlayer.outfit slots.",
+        ],
+    };
+})();
+
+</script>
+
+<script>
+
+//  MATERIAL TO JSON.
+//  Return a promise with the 
+//  material json object resolved.
+
+//  materialtoJSON.js (v1.2)
+
+    function materialtoJSON( material ){
+
+    //  MULTIMATERIAL.
+
+        if ( material.type == "MultiMaterial" ) {
+
+
+        //  multimaterial to json.
+
+            var multjson = {
+
+                _id: "",
+                type: material.type,
+                uuid: material.uuid || THREE.Math.generateUUID(),
+
+            };
+
+
+        //  named multimaterial.
+
+            while ( multjson._id.length < 4 ) {
+
+                multjson._id = prompt(`Please type a material name (required):`
+                    + `\nName must be four (4) characters length at least`,
+                    material._id || "untitled material"
+                );
+
+            //  Abort.
+
+                if ( multjson._id == null ) {
+                    console.warn(`Multimaterial to json canceled by the user.`);
+                    return;
+                }
+
+            }
+
+
+        //  materials to json.
+
+            multjson.materials = [];
+
+            for ( var i = 0; i < material.materials.length; i++ ){
+
+                multjson.materials.push( materialtoJSON( material.materials[i] ) );
+
+            }
+
+
+            debugMode && console.log( "multimaterial to json:", multjson );
+
+            return multjson;
+
+        }
+
+
+    //  MATERIAL.
+
+        var json = {};
+
+        while ( material.name.length < 4 ) {
+
+            json._id = prompt(`Please type a material name (required):`
+                + `\nName must be four (4) characters length at least`,
+                material._id || "untitled material"
+            );
+
+            //  Abort.
+
+            if ( json._id == null ) {
+                console.warn(`Material to json canceled by the user.`);
+                return;
+            }
+
+        }
+
+
+        for ( var name in material ){
+
+            if ( material[ name ] == undefined ) continue;         // important!
+            if ( material[ name ] instanceof Function ) continue;  // important!
+
+            switch( name ){
+
+                case "defines":
+                case "program":
+                case "_listeners":
+                case "needsUpdate":
+                case "_needsUpdate":
+                case "__webglShader":
+                break;
+
+
+            //  uuid.
+
+                case "uuid":
+                    json.uuid = material.uuid || THREE.Math.generateUUID();
+                break;
+
+
+            //  name && _id.
+
+                case "name":
+                    json._id = material[ name ];
+                    json[ name ] = material[ name ];
+                break;
+
+
+            //  default.
+
+                default:
+                    json[ name ] = material[ name ];
+                break;
+
+
+            //  texture to json.
+
+                case "map":
+                case "bumpMap":
+                case "alphaMap":
+                case "normalMap":
+                case "emissiveMap":
+                case "displacementMap":
+                case "metalnessMap":
+                case "roughnessMap":
+                case "specularMap":
+                case "lightMap":
+                case "aoMap":
+
+                    if ( !(material[ name ] instanceof THREE.Texture) ) {
+                        throw `${name} is not instance of THREE.Texture`;
+                    }
+
+                    json[ name ] = texturetoJSON( material[ name ] );
+
+                break;
+
+
+            //  three color to hex.
+
+                case "color":
+                case "emissive":
+                case "specular":
+
+                    if ( !(material[ name ] instanceof THREE.Color) ) {
+                        throw `${name} is not instance of THREE.Color`;
+                    }
+
+                    json[ name ] = material[ name ].getHex();
+
+                break;
+
+
+            //  vector2 to array.
+
+                case "normalScale":
+
+                    if ( !(material[ name ] instanceof THREE.Vector2) ) {
+                        throw `${name} is not instance of THREE.Vector2`;
+                    }
+
+                    json[ name ] = material[ name ].toArray();
+
+                break;
+
+
+            //  cube texture (TODO).
+
+                case "envMap":
+
+                    // TODO //
+
+                break;
+
+            }
+
+        }
+
+
+        debugMode && console.log( "material to json:", json );
+
+        return json;
+
+    }
+
+    
+
+//  MATERIAL FROM JSON.
+//  Return a promise with the material resolved.
+
+    function materialfromJSON( json ){
+
+
+   //  MULTIMATERIAL.
+
+       if ( json.type == "MultiMaterial" ) {
+
+
+           var materials = [];
+
+           for ( var i = 0; i < json.materials.length; i++ ){
+
+               materials.push( materialfromJSON( json.materials[i] ) );
+
+           }
+
+           //debugMode && console.log("materials from json:", materials);
+
+
+       //  Create multimaterial.
+
+           var multimaterial = new THREE.MeshFaceMaterial(materials);
+
+           multimaterial.uuid = json.uuid || THREE.Math.generateUUID();
+
+           //debugMode && console.log("multimaterial from json:", multimaterial);
+
+           return multimaterial;
+
+        }
+
+
+    //  MATERIAL.
+
+        var options = {};
+
+        for (var name in json){
+
+            if ( json[ name ] == undefined ) continue; // important!
+
+            switch (name){
+
+                case "_id":
+                break;
+
+            //  uuid.
+
+                case "uuid":
+                    options.uuid = json.uuid || THREE.Math.generateUUID();
+                break;
+
+
+            //  default.
+
+                default:
+                    options[ name ] = json[ name ];
+                break;
+
+
+            //  texture from json.
+
+                case "alphaMap":
+                case "aoMap":
+                case "bumpMap":
+                case "displacementMap":
+                case "emissiveMap":
+                case "lightMap":
+                case "map":
+                case "metalnessMap":
+                case "normalMap":
+                case "roughnessMap":
+                case "specularMap":
+
+                        options[ name ] = texturefromJSON( json[ name ] );
+
+                break;
+
+
+            //  three color to hex.
+
+                case "color":
+                case "emissive":
+                case "specular":
+
+                    options[ name ] = new THREE.Color();
+                    options[ name ].setHex( json[ name ] );
+
+                break;
+
+
+            //  vector2 from array.
+
+                case "normalScale":
+
+                    options[ name ] = new THREE.Vector2();
+                    options[ name ].fromArray( json[ name ] );
+
+                break;
+
+
+            //  cube texture (TODO).
+
+                case "envMap":
+
+                    // TODO //
+
+                break;
+
+            }
+
+        }
+
+        return new THREE[ options.type ](options);
+
+    }
+
+
+//  TEXTURE TO JSON.
+//  Return a promise resolved 
+//  with the texture json object.
+
+    function texturetoJSON( texture ){
+
+        var json = {};
+
+        for (var name in texture ){
+
+            if ( texture[ name ] == undefined ) continue;
+            if ( texture[ name ] instanceof Function ) continue;
+
+
+            switch (name){
+
+                case "_listeners":
+                break;
+
+
+            //  uuid.
+
+                case "uuid":
+                    json[ name ] = texture[ name ] || THREE.Math.generateUUID();
+                break;
+
+
+            //  default.
+
+                default:
+                    json[ name ] = texture[ name ];
+                break;
+
+
+            //  vector2 to array.
+
+                case "offset":
+                case "repeat":
+                    json[ name ] = texture[ name ].toArray();
+                break;
+
+
+            //  image to json.
+
+                case "image":
+                    json[ name ] = texture.sourceFile || getDataURL( texture[ name ] ); // important!
+                break;
+
+            }
+
+        }
+
+        return json;
+
+    }
+
+
+//  TEXTURE FROM JSON.
+//  Return a promise with the texture resolved.
+
+    function texturefromJSON( json ){
+
+        var texture = new THREE.Texture();
+
+        for ( var name in json ){
+
+
+            switch (name){
+
+
+            //  default.
+
+                default:
+                    texture[ name ] = json[ name ];
+                break;
+
+
+            //  array to vector2.
+
+                case "offset":
+                case "repeat":
+
+                    if ( json[ name ].length != 2) break;
+
+                    texture[ name ] = new THREE.Vector2();
+                    texture[ name ].fromArray( json[ name ] );
+
+                break;
+
+
+            //  wrapS & wrapT.
+
+                case "wrap":
+
+                    if ( json[ name ].length != 2) break;
+                    if ( !( json[ name ] instanceof Array ) ) break;
+
+                    texture.wrapS = json[ name ][0];
+                    texture.wrapT = json[ name ][1];
+
+                break;
+
+
+            //  image from json.
+
+                case "image":
+
+                    (function (){
+
+                        var img = new Image();
+                        img.crossOrigin = "anonymous";
+                        $(img).one("load", function(){
+                            texture.image = this;
+                            texture.needsUpdate = true;
+                        }).attr({src: json.image});
+
+                    })();
+
+                break;
+
+            }
+
+        }
+
+        return texture;
+
+    }
+
+
+
+//  IMAGE TO JSON.
+//  Return a promise with the 
+//  image json object resolved.
+
+    function imagetoJSON( image ){
+
+        return {
+            uuid: THREE.Math.generateUUID(),
+            url: image.src || getDataURL( image ),
+        };
+
+    }
+
+    function getDataURL( image ){
+
+        var canvas;
+
+        if ( image.toDataURL != undefined ) {
+
+            canvas = image;
+
+        } else {
+
+            canvas = document.createElementNS( "http://www.w3.org/1999/xhtml", "canvas" );
+            canvas.width = image.width;
+            canvas.height = image.height;
+            canvas.getContext( "2d" ).drawImage( image, 0, 0, image.width, image.height );
+
+        }
+
+        if ( canvas.width > 2048 || canvas.height > 2048 ) {
+
+            return canvas.toDataURL( "image/jpeg", 0.6 );
+
+        } else {
+
+            return canvas.toDataURL( "image/png" );
+        }
+
+    }
+
+
+//  IMAGE FROM JSON.
+//  Return a promise with the image resolved.
+
+    function imagefromJSON( json, onImageLoad ){
+
+        var img = new Image();
+        img.crossOrigin = "anonymous";
+
+        if ( onImageLoad ) {
+            img.addEventListener("load", onImageLoad);
+        }
+
+        img.src = json.url;
+
+        return img;
+
+    }
+
+</script>
+
+<script>
+
+//  initSkinnedAsset.js (v1.1)
+
+    function initSkinnedAsset( json, url ){
+
+        var loader = new THREE.JSONLoader();
+        var object = loader.parse( json );
+
+    //  Material.
+
+        if ( !!object.materials ) {
+
+            object.materials.forEach( function ( material ) {
+                material.skinning = true;     // !important
+            }); 
+        }
+
+    //  Switching to multimaterials.
+
+        if ( !!object.materials && object.materials.length > 0 ) {
+
+            var multimaterial = new THREE.MeshFaceMaterial( object.materials );  // <-- MultiMaterial.
+            for (var i = 0; i < multimaterial.materials.length; i++){
+                if ( !multimaterial.materials[i].skinning ) {
+                    multimaterial.materials[i].skinning = true;                  // !important
+                }
+            }
+
+        } else {
+
+            var multimaterial = new THREE.MeshFaceMaterial([
+                new THREE.MeshStandardMaterial({skinning:true})
+            ]);
+        }
+
+        //  (threejs r87 warning: THREE.MeshFaceMaterial has been removed. Use an Array instead.)
+
+        if ( !multimaterial ) console.error("MultiMaterial did not defined:", multimaterial);
+
+    //  Geometry.
+
+        var geometry = object.geometry;
+        geometry.computeFaceNormals();
+        geometry.computeVertexNormals();
+        geometry.computeBoundingBox();
+        geometry.computeBoundingSphere();
+        geometry.name = json.name;
+
+        if ( !!json.sourceFile ) {
+            geometry.sourceFile = json.sourceFile;  // IMPORTANT //
+        } else if ( !!url ) {
+            geometry.sourceFile = url;              // IMPORTANT //
+        }
+
+    //  Skinned mesh.
+
+        var skinned = new THREE.SkinnedMesh( geometry, multimaterial );
+
+        skinned.renderDepth = 1;
+        skinned.frustumCulled = false;              // IMPORTANT //
+        skinned.scale.set( 1, 1, 1 );
+        skinned.position.set( 0, 0, 0 );
+        skinned.rotation.set( 0, 0, 0 ); 
+
+        return skinned;
+    }
+
+
+//  makePowerOfTwo.js
+
+    function makePowerOfTwo( image, natural ) {
+        var canvas = document.createElement( "canvas" );
+
+        if ( natural ){
+            canvas.width = THREE.Math.nearestPowerOfTwo( image.naturalWidth );
+            canvas.height = THREE.Math.nearestPowerOfTwo( image.naturalHeight );
+        } else {
+            canvas.width = THREE.Math.nearestPowerOfTwo( image.width );
+            canvas.height = THREE.Math.nearestPowerOfTwo( image.height );
+        }
+        var context = canvas.getContext( "2d" );
+        context.drawImage( image, 0, 0, canvas.width, canvas.height );
+
+    //  debugMode && console.warn( "outfitLoader:makePowerOfTwo(img):", 
+    //  "Image resized to:", canvas.width, "x", canvas.height );
+
+        return canvas;
+    }
+
+
+//  getDataURL.js
+
+    function getDataURL( image ) {
+
+        var canvas;
+
+        if ( image.toDataURL !== undefined ) {
+
+            canvas = image;
+
+        } else {
+
+            canvas = document.createElementNS( 'http://www.w3.org/1999/xhtml', 'canvas' );
+            canvas.width = image.width;
+            canvas.height = image.height;
+
+            canvas.getContext( '2d' ).drawImage( image, 0, 0, image.width, image.height );
+
+        }
+
+        if ( canvas.width > 2048 || canvas.height > 2048 ) {
+
+            return canvas.toDataURL( 'image/jpeg', 0.6 );
+
+        } else {
+
+            return canvas.toDataURL( 'image/png' );
+
+        }
+
+    }
+
+</script>
+
+<script>
+
+//  GEOMETRY UV IMAGE TO JSON.
+//  Return a promise with the MESH  
+//  UV image to json object resolved.
+
+    async function UVtoJSON( geometry, size ){
+
+        if ( geometry == undefined ) 
+            throw "Geometry not defined.";
+        if ( size = undefined ) size = 512;
+
+        var json = {};
+        json.uuid = THREE.Math.generateUUID();
+        json.name = json._id = [ geometry.name, "uv" ].join(".");
+        json.data = THREE.UVsDebug( geometry, size ).toDataURL(); 
+        debugMode && console.log( "UV to JSON:", json );
+
+        return json;
+
+    }
+
+</script>
+
+<script>
+
+(function(){
+
+//  TO BE MOVED IN SERVICE WORKER INSTALLER.
+    if ( store( "male" ) == null ) store({male:  []});
+    if ( store("female") == null ) store({female:[]});
+    if ( store("gender") == null ) store({gender:""});
+
+})();
+
+</script>
+
+
+        <!-- CONFING -->
+
+<script>
+
+    var Config = function () {
+
+        var name = "outfits-tab";
+
+        var storage = {
+
+            "language": "en",
+            "autosave": true,
+            "theme": "css/light.css",
+            "settings/history": true,
+
+            //  "project/title": "",
+            //  "project/editable": false,
+            //  "project/renderer": "WebGLRenderer",
+            //  "project/renderer/antialias": true,
+            //  "project/renderer/shadows": true,
+            //  "project/vr": false,
+
+            //  "settings/shortcuts/translate": "w",
+            //  "settings/shortcuts/rotate": "e",
+            //  "settings/shortcuts/scale": "r",
+            //  "settings/shortcuts/undo": "z",
+            //  "settings/shortcuts/focus": "f",
+        };
+
+        if ( window.localStorage[ name ] === undefined ) {
+
+            window.localStorage[ name ] = JSON.stringify( storage );
+
+        } else {
+
+            var data = JSON.parse( window.localStorage[ name ] );
+
+            for ( var key in data ) {
+
+                storage[ key ] = data[ key ];
+
+            }
+
+        }
+
+        return {
+
+            getKey: function ( key ) {
+
+                return storage[ key ];
+
+            },
+
+        //  arguments: key, value, key, value ...
+
+            setKey: function () { 
+
+                for ( var i = 0, l = arguments.length; i < l; i += 2 ) {
+
+                    storage[ arguments[ i ] ] = arguments[ i + 1 ];
+
+                }
+
+                window.localStorage[ name ] = JSON.stringify( storage );
+
+                console.log( `[${/\d\d\:\d\d\:\d\d/.exec( new Date() )[ 0 ]}] Saved config to LocalStorage.` );
+
+            },
+
+            clear: function () {
+
+                delete window.localStorage[ name ];
+
+            }
+
+        };
+
+    };
+
+</script>
+
+
+        <!-- HISTORY -->
+
+<script>
+
+/*
+     * @author dforrer / https://github.com/dforrer
+     * Developed as part of a project at University of Applied Sciences and Arts Northwestern Switzerland (www.fhnw.ch)
+*/
+
+    var History = function ( editor ) {
+
+    //  this.editor = editor;
+        this.undos = [];
+        this.redos = [];
+        this.lastCmdTime = new Date();
+        this.idCounter = 0;
+
+        this.historyDisabled = false;
+        this.config = config; // editor.config;
+
+	//  Set editor-reference in Command
+
+    //  Command( editor );
+
+    };
+
+    History.prototype = {
+
+        execute: function ( cmd, optionalName ) {
+
+            var lastCmd = this.undos[ this.undos.length - 1 ];
+            var timeDifference = new Date().getTime() - this.lastCmdTime.getTime();
+
+            var isUpdatableCmd = lastCmd &&
+                lastCmd.updatable &&
+                cmd.updatable &&
+                lastCmd.object === cmd.object &&
+                lastCmd.type === cmd.type &&
+                lastCmd.script === cmd.script &&
+                lastCmd.attributeName === cmd.attributeName;
+
+            if ( isUpdatableCmd && cmd.type === "SetScriptValueCommand" ) {
+
+            //  When the cmd.type is "SetScriptValueCommand" the timeDifference is ignored.
+                lastCmd.update( cmd );
+                cmd = lastCmd;
+
+            } else if ( isUpdatableCmd && timeDifference < 500 ) {
+
+                lastCmd.update( cmd );
+                cmd = lastCmd;
+
+            } else {
+
+            //  the command is not updatable and is added as a new part of the history
+                this.undos.push( cmd );
+                cmd.id = ++ this.idCounter;
+            }
+
+            cmd.name = ( optionalName !== undefined ) ? optionalName : cmd.name;
+            cmd.execute();
+            cmd.inMemory = true;
+
+            if ( this.config.getKey( "settings/history" ) ) {
+            //  serialize the cmd immediately after execution and append the json to the cmd.
+                cmd.json = cmd.toJSON();	
+            }
+
+            this.lastCmdTime = new Date();
+
+        //  clearing all the redo-commands.
+            this.redos = [];
+            historyChanged.dispatch( cmd );
+
+        },
+
+        undo: function () {
+
+            if ( this.historyDisabled ) {
+                alert( "Undo/Redo is disabled." );
+                return;
+            }
+
+            var cmd = undefined;
+
+            if ( this.undos.length > 0 ) {
+
+                cmd = this.undos.pop();
+
+                if ( cmd.inMemory === false ) {
+                    cmd.fromJSON( cmd.json );
+                }
+
+            }
+
+            if ( cmd !== undefined ) {
+
+                cmd.undo();
+                this.redos.push( cmd );
+                historyChanged.dispatch( cmd );
+                debugMode && console.log(`Undo: ${cmd.name}`);
+
+            }
+
+            return cmd;
+        },
+
+        redo: function () {
+
+            if ( this.historyDisabled ) {
+                alert( "Undo/Redo is disabled." );
+                return;
+            }
+
+            var cmd = undefined;
+
+            if ( this.redos.length > 0 ) {
+
+                cmd = this.redos.pop();
+
+                if ( cmd.inMemory === false ) {
+                    cmd.fromJSON( cmd.json );
+                }
+
+            }
+
+            if ( cmd !== undefined ) {
+
+                cmd.execute();
+                this.undos.push( cmd );
+                historyChanged.dispatch( cmd );
+                debugMode && console.log(`Redo: ${cmd.name}`);
+
+            }
+
+            return cmd;
+        },
+
+        toJSON: function () {
+
+            var history = {};
+            history.undos = [];
+            history.redos = [];
+
+            if ( ! this.config.getKey( "settings/history" ) ) {
+                return history;
+            }
+
+        //  Append Undos to History.
+
+            for ( var i = 0; i < this.undos.length; i ++ ) {
+                if ( this.undos[ i ].hasOwnProperty( "json" ) ) {
+                    history.undos.push( this.undos[ i ].json );
+                }
+            }
+
+        //  Append Redos to History.
+
+            for ( var i = 0; i < this.redos.length; i ++ ) {
+                if ( this.redos[ i ].hasOwnProperty( "json" ) ) {
+                    history.redos.push( this.redos[ i ].json );
+                }
+            }
+
+            return history;
+
+        },
+
+        fromJSON: function ( json ) {
+
+            if ( json === undefined ) return;
+
+            for ( var i = 0; i < json.undos.length; i ++ ) {
+
+                var cmdJSON = json.undos[ i ];
+                var cmd = new window[ cmdJSON.type ]();	// creates a new object of type "json.type"
+                cmd.json = cmdJSON;
+                cmd.id = cmdJSON.id;
+                cmd.name = cmdJSON.name;
+                this.undos.push( cmd );
+                this.idCounter = ( cmdJSON.id > this.idCounter ) ? cmdJSON.id : this.idCounter; // set last used idCounter
+
+            }
+
+            for ( var i = 0; i < json.redos.length; i ++ ) {
+
+                var cmdJSON = json.redos[ i ];
+                var cmd = new window[ cmdJSON.type ]();	// creates a new object of type "json.type"
+                cmd.json = cmdJSON;
+                cmd.id = cmdJSON.id;
+                cmd.name = cmdJSON.name;
+                this.redos.push( cmd );
+                this.idCounter = ( cmdJSON.id > this.idCounter ) ? cmdJSON.id : this.idCounter; // set last used idCounter
+
+            }
+
+        //  Select the last executed undo-command.
+            historyChanged.dispatch( this.undos[ this.undos.length - 1 ] );
+
+        },
+
+        clear: function () {
+
+            this.undos = [];
+            this.redos = [];
+            this.idCounter = 0;
+
+            historyChanged.dispatch();
+
+        },
+
+        goToState: function ( id ) {
+
+            if ( this.historyDisabled ) {
+                alert( "Undo/Redo is disabled." );
+                return;
+            }
+
+            historyChanged.active = false;
+
+            var cmd = this.undos.length > 0 ? this.undos[ this.undos.length - 1 ] : undefined;	// next cmd to pop
+
+            if ( cmd === undefined || id > cmd.id ) {
+
+                cmd = this.redo();
+                while ( cmd !== undefined && id > cmd.id ) {
+                    cmd = this.redo();
+                }
+
+            } else {
+
+                while ( true ) {
+                    cmd = this.undos[ this.undos.length - 1 ];	// next cmd to pop
+                    if ( cmd === undefined || id === cmd.id ) break;
+                    this.undo();
+                }
+
+            }
+
+            historyChanged.active = true;
+            historyChanged.dispatch( cmd );
+
+        },
+
+        enableSerialization: function ( id ) {
+
+        //  Because there might be commands in this.undos and this.redos
+        //  which have not been serialized with .toJSON() we go back
+        //  to the oldest command and redo one command after the other
+        //  while also calling .toJSON() on them.
+
+            this.goToState( - 1 );
+
+            historyChanged.active = false;
+
+            var cmd = this.redo();
+
+            while ( cmd !== undefined ) {
+
+                if ( ! cmd.hasOwnProperty( "json" ) ) {
+                    cmd.json = cmd.toJSON();
+                }
+
+                cmd = this.redo();
+            }
+
+            historyChanged.active = true;
+
+            this.goToState( id );
+
+        },
+
+    };
+
+</script>
+
+
+        <!-- COMMANDS -->
+
+<script>
+
+/*
+     * @author dforrer / https://github.com/dforrer
+     * Developed as part of a project at University of Applied Sciences and Arts Northwestern Switzerland (www.fhnw.ch)
+*/
+
+/*
+     * @param editorRef pointer to main editor object used to initialize
+     *        each command object with a reference to the editor
+     * @constructor
+*/
+
+    var Command = function ( editorReference ) {
+
+        this.id = - 1;
+        this.inMemory = false;
+        this.updatable = false;
+        this.type = "";
+        this.name = "";
+
+    //    if ( editorReference !== undefined ) {
+
+    //        Command.editor = editorReference;
+
+    //    }
+
+    //    this.editor = Command.editor;
+
+    };
+
+    Command.prototype.toJSON = function () {
+
+        var output = {};
+        output.type = this.type;
+        output.id = this.id;
+        output.name = this.name;
+        return output;
+
+    };
+
+    Command.prototype.fromJSON = function ( json ) {
+
+        this.inMemory = true;
+        this.type = json.type;
+        this.id = json.id;
+        this.name = json.name;
+
+    };
+
+</script>
+
+<script>
+
+    var SetGenderCommand = function( value ){
+
+        Command.call( this );
+
+        this.type = "SetGenderCommand";
+        this.name = `Set gender to ${value || "null"}`;
+
+        this.object = localPlayer.outfit;
+
+        this.newValue = value;
+        this.oldValue = localPlayer.outfit.getGender();
+
+    };
+
+    SetGenderCommand.prototype = {
+
+        execute: function () {
+            this.object.setGender(this.newValue);
+            pagerChanged.dispatch(this);
+            genderChanged.dispatch(this);
+        },
+
+        undo: function () {
+            this.object.setGender(this.oldValue);
+            pagerChanged.dispatch(this);
+            genderChanged.dispatch(this);
+        },
+
+        toJSON: function () {
+
+            var output = Command.prototype.toJSON.call( this );
+
+            output.oldValue = this.oldValue;
+            output.newValue = this.newValue;
+
+            return output;
+        },
+
+        fromJSON: function ( json ) {
+
+            Command.prototype.fromJSON.call( this, json );
+
+            this.oldValue = json.oldValue;
+            this.newValue = json.newValue;
+            this.object = localPlayer.outfit;
+
+            if ( this.object == undefined ) {
+                throw "local player not found!";
+            }
+
+        },
+
+    };
+
+</script>
+
+<script>
+
+    var SetOutfitItemCommand = function( domElement ){
+
+        Command.call( this );
+
+        this.type = "SetOutfitItemCommand";
+        this.name = `Outfit ${domElement.name}`;
+
+        this.domElement = domElement;
+
+        this.slot = domElement.slot;
+        this.gender = localPlayer.outfit.getGender();
+        this.selector = "." + domElement.className.split(" ").join(".");
+        this.object = {[domElement.slot]: domElement.cache};
+
+    };
+
+    SetOutfitItemCommand.prototype = {
+
+        execute: function () {
+
+            if ( !localPlayer.outfit[this.slot] )
+                localPlayer.outfit.add(this.object);
+            else
+                localPlayer.outfit.remove(this.slot);
+            
+            outfitChanged.dispatch( this );
+        },
+
+        undo: function () {
+
+            if ( !localPlayer.outfit[this.slot] )
+                localPlayer.outfit.add(this.object);
+            else
+                localPlayer.outfit.remove(this.slot);
+            
+            outfitChanged.dispatch( this );
+        },
+
+        toJSON: function () {
+
+            var output = Command.prototype.toJSON.call( this );
+
+            output.slot = this.slot;
+            output.gender = this.gender;
+            output.selector = this.selector;
+
+            return output;
+        },
+
+        fromJSON: function ( json ) {
+
+            Command.prototype.fromJSON.call( this, json );
+
+            var domElement = $(json.selector).get(0);
+
+            this.slot = json.slot;
+            this.gender = json.gender;
+            this.selector = json.selector;
+            this.domElement = domElement;
+            this.object = {[domElement.slot]: domElement.cache};
+
+            if ( this.domElement == undefined ){
+                throw "outfit helper not found!";
+            }
+
+        },
+
+    };
+
+</script>
+
+<script>
+
+    var SetFemaleCosutmeCommand = function( domElement ){
+
+        Command.call( this );
+
+        this.type = "SetFemaleCosutmeCommand";
+        this.name = `Outfit ${domElement.name}`;
+
+        this.domElement = domElement;
+
+        this.slot = domElement.slot;
+        this.gender = localPlayer.outfit.getGender();
+        this.selector = "." + domElement.className.split(" ").join(".");
+        this.object = {[domElement.slot]: domElement.cache};
+
+    };
+
+    SetFemaleCosutmeCommand.prototype = {
+
+        execute: function () {
+
+            if ( !localPlayer.outfit[this.slot] ||
+                localPlayer.outfit[this.slot] != this.domElement.cache ) {
+
+                localPlayer.outfit.add(this.object);
+
+            } else {
+
+                localPlayer.outfit.remove(this.slot);
+
+            }
+
+            femaleCostumeChanged.dispatch( this );
+        },
+
+        undo: function () {
+
+            if ( !localPlayer.outfit[this.slot] ||
+                localPlayer.outfit[this.slot] != this.domElement.cache ) {
+
+                localPlayer.outfit.add(this.object);
+
+            } else {
+
+                localPlayer.outfit.remove(this.slot);
+
+            }
+            
+            femaleCostumeChanged.dispatch( this );
+        },
+
+        toJSON: function () {
+
+            var output = Command.prototype.toJSON.call( this );
+
+            output.slot = this.slot;
+            output.gender = this.gender;
+            output.selector = this.selector;
+
+            return output;
+        },
+
+        fromJSON: function ( json ) {
+
+            Command.prototype.fromJSON.call( this, json );
+
+            var domElement = $(json.selector).get(0);
+
+            this.slot = json.slot;
+            this.gender = json.gender;
+            this.selector = json.selector;
+            this.domElement = domElement;
+            this.object = {[domElement.slot]: domElement.cache};
+
+            if ( this.domElement == undefined ){
+                throw "outfit helper not found!";
+            }
+
+        },
+
+    };
+
+</script>
+
+<script>
+
+    var SetOutfitItemTextureCommand = function(state){
+
+        Command.call( this );
+
+        this.type = "SetOutfitItemTextureCommand";
+        this.name = `Set ${state.doc.name}`;
+
+        this.state = state;
+
+        this.doc = state.doc;
+        this.map = state.map;
+        this.gender = state.gender;
+        this.selector = state.selector;
+        this.material = state.material;
+        this.texture = state.texture;    // old texture.
+
+    };
+
+    SetOutfitItemTextureCommand.prototype = {
+
+        execute: function () {
+
+            console.log({
+                doc: this.doc,
+                map: this.map,
+                gender: this.gender,
+                material: this.material,
+                ["old texture"]: this.texture, // old texture.
+            });
+
+            var map = this.map;
+            var material = this.material;
+
+        //  Get current texture.
+            var texture = material[ map ];
+
+        //  New texture.
+            var img = new Image();
+            img.crossOrigin = "anonymous"; // important!
+            material[ map ] = new THREE.Texture(img);
+
+        //  Set new texture.
+            $(img).one("load", function(){
+                if ( material[ map ] )
+                    material[ map ].needsUpdate = true;
+                material.needsUpdate = true;
+            }).attr({src:this.doc.url});
+
+        //  Dispose current texture.
+            if ( texture ) texture.dispose();
+
+        },
+
+        undo: function () {
+
+            console.log({
+                doc: this.doc,
+                map: this.map,
+                gender: this.gender,
+                material: this.material,
+                ["old texture"]: this.texture, // old texture.
+            });
+
+        //  Get current texture.
+            var texture = this.material[ this.map ];
+
+        //  Restore old texture.
+            this.material[ this.map ] = this.texture;
+            if ( this.texture ) 
+                this.material[ this.map ].needsUpdate = true;
+            this.material.needsUpdate = true;
+
+        //  Dispose current texture.
+            if (texture) texture.dispose();
+
+        },
+
+        toJSON: function () {
+
+            var output = Command.prototype.toJSON.call( this );
+
+            output.doc = this.doc;
+            output.map = this.map
+            output.gender = this.gender;
+            output.selector = this.selector;
+        //  output.material = materialtoJSON(this.material); // asks name (_id) if "material._id" does not exist.
+            output.texture = texturetoJSON(this.material[this.map]);
+
+            return output;
+        },
+
+        fromJSON: function ( json ) {
+
+            Command.prototype.fromJSON.call( this, json );
+
+            this.doc = json.doc;
+            this.map = json.map;
+            this.gender = json.gender;
+            this.selector = json.selector;
+
+        //  this.material = materialfromJSON(json.material);  
+            this.material = $(json.selector).get(0).cache.material;
+
+            if ( this.material == undefined ){
+                throw "outfit material not found!";
+            }
+
+            this.texture = texturefromJSON(json.texture);
+        //  this.texture = this.material[ json.map ];
+
+        },
+
+    };
+
+</script>
+
+
+        <!-- UNDO/REDO -->
+
+<script>
+
+    var Signal = signals.Signal;
+    var pageChanged = new Signal();
+    var pagerChanged = new Signal();
+    var genderChanged = new Signal();
+    var outfitChanged = new Signal();
+    var historyChanged = new Signal();
+    var femaleCostumeChanged = new Signal();
+
+    var config = new Config();  // important!
+//  debugMode && console.log(config);
+
+    var OutfitHistory = new History(); // important!
+//  debugMode && console.log(OutfitHistory);
+
+    $(document).on("keydown", function(e){
+    //  debugMode && e.ctrlKey && e.which == 90 && console.log("key event:", e);
+
+        if ( e.ctrlKey && e.shiftKey && e.which == 90 ) {
+            OutfitHistory.redo();
+        }
+
+        if ( e.ctrlKey && !e.shiftKey && e.which == 90 ) {
+            OutfitHistory.undo();
+        }
+
+    });
+
+</script>
+
+
+        <!-- PAGER -->
+
+<script>
+
+/*
+     * pager.js
+     * @author anywhere3d 
+     * https://anywhere3d.com
+     * @constructor
+*/
+
+    var Pager = function(selector, limit, options){
+
+        const primaryClass = "btn-primary";
+        const fromSelector = "span#from";
+        const uptoSelector = "span#upto";
+        const countSelector = "span#count";
+
+        this.from = $(selector).find(fromSelector).get(0);
+        this.upto = $(selector).find(uptoSelector).get(0);
+        this.counter = $(selector).find(countSelector).get(0);
+
+        const pageBtnSelector       = ".page-btn";
+        const getNextBtnSelector    = ".get-next-btn";
+        const getPrevBtnSelector    = ".get-prev-btn";
+        const getNextGroupSelector  = ".get-next-group-btn";
+        const getPrevGroupSelector  = ".get-prev-group-btn";
+        const lastPageBtnSelector   = ".last-page-btn";
+        const firstPageBtnSelector  = ".first-page-btn";
+        const displayObjectSelector = "#display-object";
+
+        this.lastPageButton  = $(selector).find(lastPageBtnSelector).get(0);
+        this.firstPageButton = $(selector).find(firstPageBtnSelector).get(0);
+        this.nextPageButton  = $(selector).find(getNextBtnSelector).get(0);
+        this.prevPageButton  = $(selector).find(getPrevBtnSelector).get(0);
+        this.nextGroupButton = $(selector).find(getNextGroupSelector).get(0);
+        this.prevGroupButton = $(selector).find(getPrevGroupSelector).get(0);
+
+        this.skip = 0;
+        this.limit = limit;
+        this.pages = [];
+        this.total = null;
+        this.object = null;
+        this.pageIndex = null;
+        this.buttonIndex = null;
+        this.options = options;
+
+        this.reset = function(){
+            this.skip = 0;
+            this.pages = [];
+            this.total = null;
+            this.object = null;
+            this.pageIndex = null;
+            this.buttonIndex = null;
+            this.options = options;
+        };
+
+        this.reset();
+
+        this.init = function(){
+            var skip = this.options.skip;
+            var limit = this.options.limit;
+            var pageIndex = parseInt( skip / limit ); // + 1;
+            var $pageButtons = $(selector).find(pageBtnSelector);
+            $pageButtons.removeClass( primaryClass );
+            $pageButtons.toArray().forEach( ( button, i ) => {
+                if ( this.pages.length > 0 ) {
+                    $(button).text( this.pages[i] );
+                    $(button).data().index = this.pages[i]; // - 1;
+                } else {
+                    $(button).text( i + 1 );
+                    $(button).data().index = i;
+                }
+            });
+            var m = this.buttonIndex || 0;
+            var currentButton = $pageButtons.get(m);
+            $(currentButton).addClass( primaryClass );
+        };
+
+    //  Count method for ZANGODB.
+
+        this.count = function(){
+
+            var name = this.options.collection;
+            var selectors = this.options.selectors;
+
+            this.total = parseInt( this.options.skip );
+
+            db.collection(name).find(selectors)
+            .skip( this.options.skip ).forEach( 
+
+                () => { 
+                    $(countSelector).text( ++this.total ); 
+                },
+
+                function(err){ 
+                    if (err) throw err; 
+                }
+
+            ).catch(function(err){
+                console.error(err);
+            });
+
+        },
+
+        this.get_items = function(){
+            debugMode && console.log( "options:", this.options );
+
+            var skip = this.options.skip;
+            var limit = this.options.limit;
+            var selectors = this.options.selectors;
+            var collection = this.options.collection;
+
+        //  Check if collection exist.
+            if ( !db._cols[ collection ] ) {
+                $(this.counter).text("none");
+                $(displayObjectSelector).html( `<h2>no collection!</h2>` );
+                return;
+            }
+
+            return db.collection(collection).find(selectors)
+            .skip(skip).limit(limit).toArray(function(err){
+                if (err) throw err;
+            }).then( (docs) => {
+
+                debugMode && console.log( "items:", docs );
+
+                if ( docs.length == 0 ) return;
+
+                return docs;
+
+            }).catch(function(err){
+                console.error(err);
+                $(this.counter).text("none");
+                $(displayObjectSelector).html( `<h2>error!</h2>` );
+            });
+
+        };
+
+        this.init();
+
+        this.first = function(){
+            var $pageButtons = $(selector).find(pageBtnSelector);
+
+            clearTimeout( this.timeout );
+
+            if ( this.pageIndex == 0 ) return;
+
+            this.pageIndex = 0;
+            this.options.skip = 0;
+
+            $pageButtons.removeClass( primaryClass );
+            $pageButtons.toArray().forEach( function( button, i ){
+                $(button).text( i + 1 );
+                $(button).data().index = i;
+            });
+
+            var currentButton = $pageButtons.get(0);
+            $(currentButton).addClass( primaryClass );
+
+            this.buttonIndex = 0;
+            this.pages.length = 0;
+            this.skip = this.options.skip;
+
+            $pageButtons.toArray().forEach( ( button, i ) => {
+                this.pages.push( parseInt( $(button).text() ) );
+            });
+
+            this.timeout = setTimeout( function(){
+                pageChanged.dispatch();
+            }, 250 );
+
+        };
+
+        this.last = function(){
+            var $pageButtons = $(selector).find(pageBtnSelector);
+
+            if ( !this.total ) return;
+
+            var skip = this.options.skip;
+            var limit = this.options.limit;
+            var length = $pageButtons.length;
+
+            while ( skip + (length * limit) > this.total - 1 ){
+                length--;
+            }
+
+            if ( length < 1 ) return;
+
+            clearTimeout( this.timeout );
+
+            this.pageIndex = parseInt( (this.total - 1) / limit );
+            this.options.skip = this.pageIndex * limit;
+
+            $pageButtons.removeClass( primaryClass );
+
+            var l = $pageButtons.length;
+            var d = parseInt( this.pageIndex / l );
+            var m = parseInt( this.pageIndex % l );
+
+            var n = l * d;
+
+            $pageButtons.toArray().forEach( function( button, i ){
+                var index = n + i;
+                $(button).text( index + 1 );
+                $(button).data().index = index;
+            });
+
+            var currentButton = $pageButtons.get(m);
+            $(currentButton).addClass( primaryClass );
+
+            this.pages.length = 0;
+            this.buttonIndex = m;
+            this.skip = this.options.skip;
+
+            $pageButtons.toArray().forEach( ( button, i ) => {
+                this.pages.push( parseInt( $(button).text() ) );
+            });
+
+            this.timeout = setTimeout( function(){
+                pageChanged.dispatch();
+            }, 250 );
+
+        };
+
+        this.next = function( length ){
+            var $pageButtons = $(selector).find(pageBtnSelector);
+
+            if ( !length || length < 1 ) length = 1;
+            if ( length > $pageButtons.length ) {
+                length = $pageButtons.length;
+            }
+
+            var skip = this.options.skip;
+            var limit = this.options.limit;
+
+            if ( this.total == undefined ) return;
+
+            while ( skip + (length * limit) > this.total - 1 ){
+                length--;
+            }
+
+            if ( length < 1 ) return;
+
+            clearTimeout( this.timeout );
+
+            this.pageIndex += length; // pageIndex++;
+            this.options.skip = this.pageIndex * limit;
+
+            $pageButtons.removeClass( primaryClass );
+
+            var l = $pageButtons.length;
+            var d = parseInt( this.pageIndex / l );
+            var m = parseInt( this.pageIndex % l );
+
+            var n = l * d;
+
+            $pageButtons.toArray().forEach( function( button, i ){
+                var index = n + i;
+                $(button).text( index + 1 );
+                $(button).data().index = index;
+            });
+
+            var currentButton = $pageButtons.get(m);
+            $(currentButton).addClass( primaryClass );
+
+            this.pages.length = 0;
+            this.buttonIndex = m;
+            this.skip = this.options.skip;
+
+            $pageButtons.toArray().forEach( ( button, i ) => {
+                this.pages.push( parseInt( $(button).text() ) );
+            });
+
+            this.timeout = setTimeout( function(){
+                pageChanged.dispatch();
+            }, 250 );
+
+        };
+
+        this.prev = function( length ){
+            var $pageButtons = $(selector).find(pageBtnSelector);
+
+            if ( !length || length < 1 ) length = 1;
+            if ( length > $pageButtons.length ) {
+                length = $pageButtons.length;
+            }
+
+            var skip = this.options.skip;
+            var limit = this.options.limit;
+
+            while ( this.pageIndex - length < 0 ){
+                length--;
+            }
+
+            if ( length < 1 ) return;
+
+            clearTimeout( this.timeout );
+
+            this.pageIndex -= length; // pageIndex--;
+            this.options.skip = this.pageIndex * limit;
+
+            $pageButtons.removeClass( primaryClass );
+
+            var l = $pageButtons.length;
+            var d = parseInt( this.pageIndex / l );
+            var m = parseInt( this.pageIndex % l );
+
+            var n = l * d;
+            $pageButtons.toArray().forEach( function( button, i ){
+                var index = n + i;
+                $(button).text( index + 1 );
+                $(button).data().index = index;
+            });
+
+            var currentButton = $pageButtons.get(m);
+            $(currentButton).addClass( primaryClass );
+
+            this.pages.length = 0;
+            this.buttonIndex = m;
+            this.skip = this.options.skip;
+
+            $pageButtons.toArray().forEach( ( button, i ) => {
+                this.pages.push( parseInt( $(button).text() ) );
+            });
+
+            this.timeout = setTimeout( function(){
+                pageChanged.dispatch();
+            }, 250 );
+
+        };
+
+        this.click = function( thisButton ){
+            var $pageButtons = $(selector).find(pageBtnSelector);
+
+            var pageIndex = parseInt( $(thisButton).data("index") );
+            if ( this.pageIndex == pageIndex ) return;
+
+            clearTimeout( this.timeout );
+
+            var skip = this.options.skip
+            var limit = this.options.limit;
+
+            var buttonIndex = $pageButtons.index(thisButton);
+            this.pageIndex = parseInt( $(thisButton).data("index") );
+
+            $pageButtons.removeClass( primaryClass );
+            $(thisButton).addClass( primaryClass );
+
+            this.options.skip = this.pageIndex * limit;
+            this.pages.length = 0;
+            this.skip = this.options.skip;
+            this.buttonIndex = buttonIndex;
+
+            $pageButtons.toArray().forEach( ( button, i ) => {
+                this.pages.push( parseInt( $(button).text() ) );
+            });
+
+            this.timeout = setTimeout( function(){
+                pageChanged.dispatch();
+            }, 250 );
+
+        };
+
+    };
+
+</script>
+
+
+        <!-- GENDER DROPLIST -->
+
+<style>
+
+    .helper a, 
+    .outfit-helper a { 
+        color:#fff; 
+        font: bold 16px Arial;
+        cursor: pointer;
+        line-height: 1.5em;
+        text-decoration: none;
+    }
+
+    .outfit-helper:focus,
+    .helper:focus { outline:none; }
+
+    .outfit-helpers a:focus,
+    .helpers a:focus { outline:none; }
+
+    .helpers-header h4 { cursor:pointer; }
+
+</style>
+
+<div class="helpers-header gender-header">
+    <h4 style="margin-bottom:30px;">
+        <span style="vertical-align:-0.5rem;">Select gender:</span>
+        <div style="display:inline-block;width:50%;float:right;">
+            <select id="gender-droplist" class="form-control gender" readOnly>
+                <option value="">Select gender:</option>
+                <option value="male">male</option>
+                <option value="female">female</option>
+            </select>
+        </div>
+    </h4>
+</div>
+
+
+<script>
+
+(function(){
+
+    const outfitGenderSelector = "#gender-droplist";
+    const outfitHelperSelector = ".outfit-helper";
+    const outfitHelpersTabSelector = ".outfit-helpers.component-pane.tab-pane";
+    const maleOutfitHelpersSelector = "#male-outfit-helpers";
+    const femaleOutfitHelpersSelector = "#female-outfit-helpers";
+
+    $(outfitGenderSelector).on("change", function(){
+        $(outfitHelpersTabSelector).removeClass("in active");
+
+        if (this.value == "male")
+            $(maleOutfitHelpersSelector).addClass("in active");
+        else if (this.value == "female")
+            $(femaleOutfitHelpersSelector).addClass("in active");
+    });
+
+    $(outfitGenderSelector).on("change", function(){
+        OutfitHistory.execute( new SetGenderCommand(this.value) );
+    });
+
+    genderChanged.add( function( command ){
+
+    //  Stop animation.
+        localPlayer.outfit.AnimationsHandler.stop();
+        localPlayer.controller.isRunning = false;
+        localPlayer.controller.isWalking = false;
+        localPlayer.controller.isIdling  = true;
+        localPlayer.controller.movementSpeed = 0;
+
+    //  Remove outfit.
+        localPlayer.outfit.removeAll();
+
+    //  On history.execute(), outfit gender has changed
+    //  and droplist value has changed by user action.
+        var gender = localPlayer.outfit.getGender();
+
+    //  but on undo(), droplist value has not changed.
+        $(outfitGenderSelector).val(gender);
+
+    //  and outfitHelpers tab pane has not changed.
+        $(outfitHelpersTabSelector).removeClass("in active");
+        if (gender == "male")
+            $(maleOutfitHelpersSelector).addClass("in active");
+        if (gender == "female")
+            $(femaleOutfitHelpersSelector).addClass("in active");
+
+        if ( !gender ) {
+        //  Display skeleton.
+            var outfit = $(".outfit-helper.male.skeleton").get(0).cache;
+            localPlayer.outfit.add({"body":outfit});
+        //  Play idle animation.
+            localPlayer.outfit.AnimationsHandler.play("idle");
+            localPlayer.controller.dispatchEvent({type:"startIdling"});
+        //  We don't save null gender.
+            return;
+        }
+
+    //  Get helpers state.
+        var outfitSelectors = store( gender );
+        debugMode && console.log(outfitSelectors);
+
+    //  Update helpers text.
+        if ( outfitSelectors instanceof Array ) {
+            outfitSelectors.forEach(function( selector ){
+                var helper = $(selector).get(0);
+                $(helper).find("a").text(`Remove ${helper.name}`);
+                localPlayer.outfit.add( {[helper.slot]: helper.cache} );
+            });
+        }
+
+    //  Play idle animation.
+        localPlayer.outfit.AnimationsHandler.play("idle");
+        localPlayer.controller.dispatchEvent({type:"startIdling"});
+
+    //  Save gender.
+        store({gender:gender}); // important!
+
+    //  Show all helpers.
+    //  $(".outfit-helper").css({"display":""}); // debug.
+
+    });
+
+})();
+
+</script>
+
+
+
+        <!-- OUTFIT HELPERS -->
+
+
+<div class="helpers-header outfit-header">
+    <h4>Outfit helpers:</h4>
+</div>
+
+<div id="outfit-helpers" class="tab-content">
+
+    <div id="female-outfit-helpers" class="outfit-helpers component-pane tab-pane fade">
+        <li class="outfit-helper female body hidden"><a>Body</a></li>
+        <li class="outfit-helper female eyes hidden"><a>Eyes</a></li>
+        <li class="outfit-helper female hairs"><a>Hairs</a></li>
+        <li class="outfit-helper female stockings"><a>Stockings</a></li>
+        <li class="outfit-helper female underwears"><a>Underwears</a></li>
+        <li class="outfit-helper female dress"><a>Dress</a></li>
+        <li class="outfit-helper female costume"><a>Costume</a></li>
+        <li class="outfit-helper female tshirt hidden"><a>TShirt</a></li>
+        <li class="outfit-helper female trousers"><a>Trousers</a></li>
+        <li class="outfit-helper female shoes"><a>Shoes</a></li>
+        <li class="outfit-helper female skeleton hidden"><a>Skeleton</a></li>
+    </div>
+
+    <div id="male-outfit-helpers" class="outfit-helpers component-pane tab-pane fade">
+        <li class="outfit-helper male body hidden"><a>Body</a></li>
+        <li class="outfit-helper male eyes hidden"><a>Eyes</a></li>
+        <li class="outfit-helper male hairs"><a>Hairs</a></li>
+        <li class="outfit-helper male underwears"><a>Underwears</a></li>
+        <li class="outfit-helper male costume"><a>Costume</a></li>
+        <li class="outfit-helper male tshirt"><a>TShirt</a></li>
+        <li class="outfit-helper male trousers"><a>Trousers</a></li>
+        <li class="outfit-helper male shoes"><a>Shoes</a></li>
+        <li class="outfit-helper male skeleton hidden"><a>Skeleton</a></li>
+    </div>
+
+</div>
+
+<hr/>
+
+<script>
+
+(function(){
+
+    const outfitHeaderSelector = ".outfit-header";
+    const helpersHeaderSelector = ".helpers-header";
+    const outfitHelpersSelector = "#outfit-helpers";
+
+    var dblclicked = new Signal();
+
+//  Event handlers.
+    function onDoubleClickEventHandler( element ){
+        if ( $(element).css("display") == "none" ) {
+            $(element).slideDown();
+        } else {
+            $(element).slideUp();
+        }
+    }
+
+//  Event listeners.
+    dblclicked.add(onDoubleClickEventHandler);
+
+//  Dispatch events.
+    $(outfitHeaderSelector).on("dblclick", function(){
+        dblclicked.dispatch( $(outfitHelpersSelector).get(0) );
+    });
+
+})();
+
+</script>
+
+
+<script>
+
+(function(){
+
+    const outfitHelperSelector = ".outfit-helper";
+    const playerHelperSelector = "#player-helper";
+
+    $(outfitHelperSelector).on("click", function(){
+        if ( !this.cache ) return;
+/*
+        var gender = localPlayer.outfit.getGender();
+
+        if ( gender && this.slot == "body" ) {
+
+            //  Add/Remove body. We dont use command here because is dummy task.
+            //  When we remove the localPlayer.outfit.body, outfitBodyChanged
+            //  singnal handler doesn't save this change in store, so when body 
+            //  added again we get the last store outfit helpers state. 
+            //  In other words SetOutfitBodyCommand -> outfitBodyChanged signal 
+            //  handler does not change/save the outfit state in store.
+
+            //  THERE IS A BUG HERE... WE MUST ALWAYS HAVE ".outfit-helper.[gender].body", 
+            //  AND ".outfit-helper.[gender].eyes" IN STORE KEYS "male" and "female".
+            //  When skeleton is in body slot, all other helpers MUST BE deacivated.
+
+            if ( !localPlayer.outfit.body || localPlayer.outfit.body != this.cache ) {
+                                          // "this.cache" is always the "body" mesh.
+            //  Get helpers state.
+                var outfitSelectors = store( gender );
+                debugMode && console.log(outfitSelectors);
+
+            //  Show all helpers.
+                $(".outfit-helper").css({"display":""});
+
+            //  Update helpers text.
+                if ( outfitSelectors instanceof Array ) {
+                    outfitSelectors.forEach(function( selector ){
+                        var helper = $(selector).get(0);
+                        $(helper).find("a").text(`Remove ${helper.name}`);
+                        localPlayer.outfit.add( {[helper.slot]: helper.cache} );
+                    });
+                }
+
+            } else {
+
+                localPlayer.outfit.removeAll();
+
+                var skeleton = { "body": $(".outfit-helper.female.skeleton").get(0).cache };
+
+                localPlayer.outfit.add( skeleton );
+
+                //  Reset helpers text.
+                var self = this;
+                $(`.outfit-helper.${gender}`).toArray().forEach(function( helper ){
+                    $(helper).find("a").text(`Add ${helper.name}`);
+                //  Hide other helpers.
+                    if ( helper != self ) helper.style.display = "none";
+                });
+
+            }
+
+            return;
+        }
+*/
+        
+        if ( $(this).hasClass("female") && this.slot == "costume" ) {
+
+        //  Add/Remove dress, costume (toggle).
+            OutfitHistory.execute( new SetFemaleCosutmeCommand(this) );
+
+        } else {
+
+        //  Add/Remove everything else.
+            OutfitHistory.execute( new SetOutfitItemCommand(this) );
+        }
+
+    });
+
+    outfitChanged.add( function( command ){
+        debugMode && console.log( "command:", command );
+
+        var slot = command.slot;
+        var gender = command.gender;
+        var domElement = command.domElement;
+
+        if ( !localPlayer.outfit[slot] )
+            $(domElement).find("a").text(`Add ${domElement.name}`);
+        else if ( localPlayer.outfit[slot] == domElement.cache )
+            $(domElement).find("a").text(`Remove ${domElement.name}`);
+
+    //  Get helpers state.
+        var selector = [".outfit-helper", gender].join(".");
+
+        var outfithelperStates = $( selector ).toArray()
+        .filter( function( element ){ 
+            return ( !!localPlayer.outfit[element.slot] && localPlayer.outfit[element.slot] == element.cache ); 
+        }).map( function( element ){ 
+            return "." + element.className.replace(" hidden", "").split(" ").join("."); 
+        });
+
+    //  Save helpers state.
+        store({ [gender]: outfithelperStates });
+
+    });
+
+    femaleCostumeChanged.add( function( command ){
+        debugMode && console.log( "command:", command );
+
+        var slot = command.slot;
+        var gender = command.gender;
+        var domElement = command.domElement;
+
+    //  if ( command.type == "SetFemaleCosutmeCommand" ) {
+
+        var dressHelper = $(".outfit-helper.female.dress").get(0);
+        var costumeHelper = $(".outfit-helper.female.costume").get(0);
+
+        if ( !localPlayer.outfit.costume ) {
+            $(dressHelper).find("a").text(`Add ${dressHelper.name}`);
+            $(costumeHelper).find("a").text(`Add ${costumeHelper.name}`);
+        }
+
+        if ( localPlayer.outfit.costume == dressHelper.cache ){
+            $(dressHelper).find("a").text(`Remove ${dressHelper.name}`);
+            $(costumeHelper).find("a").text(`Add ${costumeHelper.name}`);
+        }
+
+        if ( localPlayer.outfit.costume == costumeHelper.cache ){
+            $(dressHelper).find("a").text(`Add ${dressHelper.name}`);
+            $(costumeHelper).find("a").text(`Remove ${costumeHelper.name}`);
+        }
+
+    //  Get helpers state.
+        var selector = [".outfit-helper", "female"].join(".");
+
+        var outfithelperStates = $( selector ).toArray()
+        .filter( function( element ){ 
+            return ( !!localPlayer.outfit[element.slot] && localPlayer.outfit[element.slot] == element.cache ); 
+        }).map( function( element ){ 
+            return "." + element.className.replace(" hidden", "").split(" ").join("."); 
+        });
+
+    //  Save helpers state.
+        store({ female: outfithelperStates });
+
+    });
+
+})();
+
+</script>
+
+
+        <!-- COSTUMIZE OUTFIT -->
+
+<style>
+
+    #outfits-catalog {
+        max-width:475px;
+        max-height:660px;
+        color:#fff;
+        border:none;
+        padding:0px;
+        background-color:#fff0;
+    }
+
+    .catalog-item {
+        width:85px;
+        height:85px;
+        margin:4px;
+        background-size: contain;
+        background-position:50% 50%;
+        background-repeat:no-repeat;
+    }
+
+    .btn-white-outline {
+        background-color:#0000;
+        color:#fff;
+        border-color:#fff;
+    }
+
+    #display-object {
+        /*  min-height:372px; */
+        padding:0px;
+        margin:0px;
+        color:#fff;
+        text-align:center;
+    }
+
+    .page-btn {
+        max-width:45px;
+        padding:6px 10px;
+    }
+
+    .helpers-header h3 { cursor:pointer; }
+
+</style>
+
+<div class="helpers-header costume-header" style="margin-bottom:20px;">
+    <h3>Texturize your outfit:</h3>
+</div>
+
+<div id="costume-helpers" class="tab-content">
+
+        <!-- OUTFIT COSTUME DROPLIST -->
+
+    <div>
+        <h4 style="margin-bottom:30px;">
+            <span style="vertical-align:-0.5rem;">Select outfit item:</span>
+            <div style="display:inline-block;width:50%;float:right;">
+                <select id="outfit-slot-droplist" class="form-control outfit helper slots" readOnly>
+                    <option value="">Select outfit:</option>
+                    <option value="body">body</option>
+                    <option value="eyes">eyes</option>
+                    <option value="hairs">hairs</option>
+                    <option value="tshirt">tshirt</option>
+                    <option value="dress">dress</option>
+                    <option value="costume">costume</option>
+                    <option value="trousers">trousers</option>
+                    <option value="stockings">stockings</option>
+                    <option value="underwears">underwears</option>
+                    <option value="shoes">shoes</option>
+                </select>
+            </div>
+        </h4>
+    </div>
+
+        <!-- CATALOGUE - PAGINATOR -->
+
+    <div id="outfits-catalog" class="well">
+
+        <h4>Choose texture:
+            <div id="itmcount" class="pull-right small" style="margin-top:4px;color:#ddd;">
+                <span id="from">zero</span>
+                to <span id="upto">zero</span>
+                of <span id="count">none</span>
+            </div>
+        </h4>
+
+        <div class="pager">
+            <div style="margin:10px 0px 10px;">
+                <li class="btn btn-primary get-prev-btn pull-left">&#9668;</li>
+                <div class="pager-buttons-holder" style="display:inline;">
+                    <a class="btn btn-default page-btn">1</a>
+                    <a class="btn btn-default page-btn">2</a>
+                    <a class="btn btn-default page-btn">3</a>
+                    <a class="btn btn-default page-btn">4</a>
+                </div>
+                <li class="btn btn-primary get-next-btn pull-right">&#9658;</li>
+            </div>
+
+            <div id="display-object" class="panel-container"></div>
+
+            <div style="margin:10px 0px 20px;">
+                <li class="btn btn-primary btn-white-outline first-page-btn pull-left" style="margin-right:5px;">First</li>
+                <li class="btn btn-primary btn-white-outline get-prev-group-btn pull-left">&#9668;&#9668;</li>
+                <li class="btn btn-primary btn-white-outline last-page-btn pull-right" style="margin-left:5px;">Last</li>
+                <li class="btn btn-primary btn-white-outline get-next-group-btn pull-right">&#9658;&#9658;</li>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<hr/>
+
+<script>
+
+$(function(){
+
+    const helpersHeaderSelector = ".helpers-header";
+    const costumeHeaderSelector = ".costume-header";
+    const costumeHelpersSelector = "#costume-helpers";
+
+    var dblclicked = new Signal();
+
+//  Event handlers.
+    function onDoubleClickEventHandler( element ){
+        if ( $(element).css("display") == "none" ) {
+            $(element).slideDown();
+        } else {
+            $(element).slideUp();
+        }
+    }
+
+//  Event listeners.
+    dblclicked.add(onDoubleClickEventHandler);
+
+//  Dispatch events.
+    $(costumeHeaderSelector).on("dblclick", function(){
+        dblclicked.dispatch( $(costumeHelpersSelector).get(0) );
+    });
+
+});
+
+</script>
+
+<script>
+
+(function(){
+
+    const catalogSelector = "#outfits-catalog";
+    const displayObjectSelector = "#display-object";
+    const genderDroplistSelector = "#gender-droplist";
+    const outfitDroplistSelector = "#outfit-slot-droplist";
+
+    var pager = new Pager(catalogSelector, 3 * 3, {
+        fields: {},
+        selectors: {},
+        collection: "",
+        sort: {_id: -1 },
+        skip:  0, // pager.skip,
+        limit: 9, // pager.limit,
+    });
+
+    debugMode && console.log("pager:", pager);
+
+    pagerChanged.add(function(command){
+
+        pager.reset(); // important!
+        pager.options.skip = 0; // imporant!
+        pageChanged.dispatch();
+
+    });
+
+    pageChanged.add(async function(command){
+
+        var kind = "texture";
+        var slot = $(outfitDroplistSelector).val();
+        var gender = localPlayer.outfit.getGender();
+
+    //  Current db.version: 3
+        pager.options.selectors = {
+
+            kind:   kind,
+            slot:   slot,
+            gender: gender,
+
+        };
+
+        pager.options.collection = slot; 
+        debugMode && console.log( "options:", pager.options );
+
+        pager.init();
+
+        function resetPager( msg ){
+            pager.reset(); // important!
+            pager.options.skip = 0; // imporant!
+            $(pager.from).text( "zero" );
+            $(pager.upto).text( "zero" );
+            $(pager.counter).text("none");
+            $(displayObjectSelector).html( msg );
+            return;
+        }
+
+        if ( !gender ) 
+            return resetPager( `<h2>no gender!</h2>` );
+        if ( !slot ) 
+            return resetPager( `<h2>no outfit!</h2>` );
+        if ( !db._cols[ slot ] ) 
+            return resetPager( `<h2>no collection!</h2>` );
+
+        var items = await pager.get_items();
+
+        if ( items == undefined || items.length == 0 ) {
+            return resetPager( `<h2>no items!</h2>` );
+        }
+
+        $(pager.from).text( pager.options.skip + 1 );
+        $(pager.upto).text( pager.options.skip + items.length );
+
+        $(displayObjectSelector).children().remove(); // important!
+
+        var template = `<div class="btn btn-default btn-white-outline catalog-item texture-item"></div>`;
+
+        items.forEach(function( doc ){
+
+            var element = $(template).get(0);
+
+            element.id    = doc._id;
+            element.title = doc.title;
+
+            if ( doc.thumbnail ) {
+                element.style["background-image"] = `url(${doc.thumbnail})`;
+            } else {
+                element.style["background-image"] = `url(/img/no-image-avaliable-200x200.png)`;
+            }
+
+            $(element).on("click", function(){
+                clearTimeout(this.timeout);
+
+                this.timeout = setTimeout( function(){
+
+                //  Get current state.
+                    var gender = localPlayer.outfit.getGender();
+                    var helper = $(outfitDroplistSelector).val();
+                    var selector = `.outfit-helper.${gender}.${helper}`;
+                //  Get current material.
+                    var mesh = $(selector).get(0).cache;
+                    var material = $(selector).get(0).cache.material;
+                //  Get current texture.
+                    var map = doc.type;
+                    var texture = material[ map ];
+                    debugMode && console.log(map, texture);
+
+                    var state = {
+                        doc: doc,
+                        map: map,
+                        gender: gender,
+                        selector: selector,
+                        material: material,
+                        texture: texture,
+                    };
+
+                    OutfitHistory.execute( new SetOutfitItemTextureCommand(state) );
+
+                }, 250 );
+
+            });
+
+            $(displayObjectSelector).append( element );
+            
+        });
+
+        pager.count(); // important!
+
+    });
+
+    $(outfitDroplistSelector).on("change", function(){
+        pagerChanged.dispatch();
+    });
+
+    var slotDroplist = $(outfitDroplistSelector).get(0);
+    var pagerButtons = $(catalogSelector).find(".page-btn");
+    debugMode && console.log(pagerButtons);
+
+    $(pager.firstPageButton).on("click", function(){
+        if ( !slotDroplist.value ) return;
+        pager.first();
+    });
+
+    $(pager.lastPageButton).on("click", function(){
+        if ( !slotDroplist.value ) return;
+        pager.last();
+    });
+
+    $(pager.nextPageButton).on("click", function(){
+        if ( !slotDroplist.value ) return;
+        pager.next();
+    });
+
+    $(pager.prevPageButton).on("click", function(){
+        if ( !slotDroplist.value ) return;
+        pager.prev();
+    });
+
+    $(pager.nextGroupButton).on("click", function(){
+        if ( !$(outfitDroplistSelector).val() ) return;
+        pager.next(pagerButtons.length);
+    });
+
+    $(pager.prevGroupButton).on("click", function(){
+        if ( !slotDroplist.value ) return;
+        pager.prev(pagerButtons.length);
+    });
+
+    pagerButtons.toArray().forEach( function( currentButton ){
+        $(currentButton).on("click", function(){
+            if ( !slotDroplist.value ) return;
+            pager.click( this );
+        });
+    });
+
+})();
+
+</script>
+
+
+
+        <!-- INITIALIZE OUTFIT HELPERS -->
+
+<script>
+
+$(function(){
+
+    const outfitGenderSelector = "#gender-droplist";
+    const outfitHelperSelector = ".outfit-helper";
+    const outfitHelpersTabSelector = ".outfit-helpers.component-pane.tab-pane";
+    const maleOutfitHelpersSelector = "#male-outfit-helpers";
+    const femaleOutfitHelpersSelector = "#female-outfit-helpers";
+
+    $(outfitGenderSelector).on("change", function(){
+        $(outfitHelpersTabSelector).removeClass("in active");
+
+        if (this.value == "male")
+            $(maleOutfitHelpersSelector).addClass("in active");
+        else if (this.value == "female")
+            $(femaleOutfitHelpersSelector).addClass("in active");
+    });
+
+    var Signal = signals.Signal;
+    var started = new Signal();
+    var initilized = new Signal();
+    
+//  Event listener.
+
+    started.addOnce(function(gender){
+        $(outfitHelpersTabSelector).removeClass("in active");
+
+        if (gender == "male")
+            $(maleOutfitHelpersSelector).addClass("in active");
+        else if (gender == "female")
+            $(femaleOutfitHelpersSelector).addClass("in active");
+
+        $(outfitGenderSelector).val( gender );
+        localPlayer.outfit.setGender( gender );
+
+    });
+
+//  Event listener.
+
+    initilized.add(function(options){
+
+    //  INIT OUTFIT HELPER OPTIONS:
+    //    name: "skeleton",                            // helper name.
+    //    slot: "body",                                // outfit slot.
+    //    geometry: "skeleton",                        // geometry _id.
+    //    material: "HF_SkeletonMaterial",             // material _id.
+    //    selector: ".outfit-helper.female.skeleton",  // helper selector.
+    //    collection: "female",                        // collection name.
+
+        var gender = store("gender");
+        var domElement = $(options.selector).get(0);
+        var collection = db.collection(options.collection);
+
+        var selectors = {
+            geometry: {_id:options.geometry},
+            material: {_id:options.material}
+        };
+
+    //  domElement.value = false;
+        domElement.slot  = options.slot;
+        domElement.name  = options.name;
+
+        collection.findOne( selectors.geometry ).then(function(json){
+
+            if ( !json ) throw `No data returned for ${collection.name} ${options.geometry}.`;
+
+            var loader = new THREE.JSONLoader();
+            return loader.parse( json );
+
+        }).then(function(object){
+
+            if ( !object ) throw `No object returned for ${collection.name} ${options.geometry}.`;
+
+            var geometry = object.geometry;
+            geometry.computeFaceNormals();
+            geometry.computeVertexNormals();
+            geometry.computeBoundingBox();
+            geometry.computeBoundingSphere();
+
+            return db.collection("materials").findOne(selectors.material, function(err){
+                if (err) throw err;
+            }).then(function( json ){
+
+                if (json) {
+
+                    var material = materialfromJSON( json );
+
+                } else {
+
+                    var material = new THREE.MeshStandardMaterial({skinning:true});
+                }
+
+                return new THREE.SkinnedMesh( geometry, material );
+
+            }).catch(function(err){
+                console.error(err);
+            });
+
+            //  else... if none material json returned...
+            /*
+                if (!!object.materials && object.materials.length > 0) {
+                    var material = new THREE.MeshFaceMaterial( object.materials );
+                    material.materials.forEach(function(mtl, i){
+                        material.materials[i].skinning = true;    // important!
+                    });
+
+                } else {
+                    var material = new THREE.MeshFaceMaterial([
+                        new THREE.MeshStandardMaterial({skinning:true}) 
+                    ]);
+                }
+
+                return new THREE.SkinnedMesh( geometry, material );
+            */
+
+        }).then(function(skinned){
+
+            skinned.renderDepth = 1;
+            skinned.frustumCulled = false; // important!
+            skinned.scale.set( 1, 1, 1 );
+            skinned.position.set( 0, 0, 0 );
+            skinned.rotation.set( 0, 0, 0 ); 
+
+            domElement.cache = skinned;
+            debugMode && console.dir(domElement);
+
+            if ( store(gender) && store(gender).filter(function(selector){ 
+                return selector == options.selector; 
+            }).length ) {
+                $(domElement).find("a").text(`Remove ${domElement.name}`);
+                localPlayer.outfit.add( {[domElement.slot]: domElement.cache} );
+            } else {
+                $(domElement).find("a").text(`Add ${domElement.name}`);
+            }
+
+        }).catch(function(err){
+            console.error(err);
+        });
+
+    });
+
+//  Dispatch events.
+
+    //  Female.
+
+    initilized.dispatch({
+        name: "skeleton",                            // helper name.
+        slot: "body",                                // outfit slot.
+        geometry: "skeleton",                        // geometry _id.
+        material: "HF_SkeletonMaterial",             // material _id.
+        selector: ".outfit-helper.female.skeleton",  // helper selector.
+        collection: "female",                        // collection name.
+    });
+
+    initilized.dispatch({
+        name: "body",
+        slot: "body",
+        geometry: "body",
+        material: "HF_SkinMaterial",
+        selector: ".outfit-helper.female.body",
+        collection: "female",
+    });
+
+    initilized.dispatch({
+        name: "eyes",
+        slot: "eyes",
+        geometry: "eyes",
+        material: "HF_EyesMaterial",
+        selector: ".outfit-helper.female.eyes",
+        collection: "female",
+    });
+
+    initilized.dispatch({
+        name: "hairs",
+        slot: "hairs",
+        geometry: "hairs",
+        material: "HF_HairsMaterial",
+        selector: ".outfit-helper.female.hairs",
+        collection: "female",
+    });
+
+    initilized.dispatch({
+        name: "underwears",
+        slot: "underwears",
+        geometry: "underwears",
+        material: "HF_UnderwearsMaterial",
+        selector: ".outfit-helper.female.underwears",
+        collection: "female",
+    });
+
+    initilized.dispatch({
+        name: "stockings",
+        slot: "stockings",
+        geometry: "stockings",
+        material: "HF_StockingsMaterial",
+        selector: ".outfit-helper.female.stockings",
+        collection: "female",
+    });
+
+    initilized.dispatch({
+        name: "dress",
+        slot: "costume",
+        geometry: "dress",
+        material: "HF_DressMaterial",
+        selector: ".outfit-helper.female.dress",
+        collection: "female",
+    });
+
+    initilized.dispatch({
+        name: "costume",
+        slot: "costume",
+        geometry: "uniform",
+        material: "HF_UniformMaterial",
+        selector: ".outfit-helper.female.costume",
+        collection: "female",
+    });
+
+    initilized.dispatch({
+        name: "trousers",
+        slot: "trousers",
+        geometry: "jeans",
+        material: "HF_JeansMaterial",
+        selector: ".outfit-helper.female.trousers",
+        collection: "female",
+    });
+
+    initilized.dispatch({
+        name: "shoes",
+        slot: "shoes",
+        geometry: "heels",
+        material: "HF_SandalsMaterial",
+        selector: ".outfit-helper.female.shoes",
+        collection: "female",
+    });
+
+    //  Male. 
+
+    initilized.dispatch({
+        name: "skeleton",
+        slot: "body",
+        geometry: "skeleton",
+        material: "HF_SkeletonMaterial",
+        selector: ".outfit-helper.male.skeleton",
+        collection: "male",
+    });
+
+    initilized.dispatch({
+        name: "body",
+        slot: "body",
+        geometry: "body",
+        material: "HM_SkinMaterial",
+        selector: ".outfit-helper.male.body",
+        collection: "male",
+    });
+
+    initilized.dispatch({
+        name: "eyes",
+        slot: "eyes",
+        geometry: "eyes",
+        material: "HM_EyesMaterial",
+        selector: ".outfit-helper.male.eyes",
+        collection: "male",
+    });
+
+    initilized.dispatch({
+        name: "hairs",
+        slot: "hairs",
+        geometry: "hairs",
+        material: "HM_HairsMaterial",
+        selector: ".outfit-helper.male.hairs",
+        collection: "male",
+    });
+
+    initilized.dispatch({
+        name: "underwears",
+        slot: "underwears",
+        geometry: "underwears",
+        material: "HM_UnderwearsMaterial",
+        selector: ".outfit-helper.male.underwears",
+        collection: "male",
+    });
+
+    initilized.dispatch({
+        name: "costume",
+        slot: "costume",
+        geometry: "uniform",
+        material: "HM_UniformMaterial",
+        selector: ".outfit-helper.male.costume",
+        collection: "male",
+    });
+
+    initilized.dispatch({
+        name: "trousers",
+        slot: "trousers",
+        geometry: "jeans",
+        material: "HM_JeansMaterial",
+        selector: ".outfit-helper.male.trousers",
+        collection: "male",
+    });
+
+    initilized.dispatch({
+        name: "shoes",
+        slot: "shoes",
+        geometry: "sneakers",
+        material: "HM_SneakersMaterial",
+        selector: ".outfit-helper.male.shoes",
+        collection: "male",
+    });
+
+    initilized.removeAll();
+
+    started.dispatch( store("gender") );
+
+});
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+/*
+(function(){
+
+    const outfitHelperSelector = ".outfit-helper";
+    const playerHelperSelector = "#player-helper";
+
+    var Signal = signals.Signal;
+
+    var mySignals = {
+        started: new Signal(),
+        initilized: new Signal(),
+        outfitChanged: new Signal(),
+    };
+
+
+//  Event handlers.
+
+    function onInitOutfitHelper(options){
+
+    //  INIT OUTFIT HELPER.
+    //    name: "skeleton",                            // helper name.
+    //    slot: "body",                                // outfit slot.
+    //    geometry: "skeleton",                        // geometry _id.
+    //    material: "HF_SkeletonMaterial",             // material _id.
+    //    selector: ".outfit-helper.female.skeleton",  // helper selector.
+    //    collection: "female",                        // collection name.
+
+        var gender = store("gender");
+        var domElement = $(options.selector).get(0);
+        var collection = db.collection(options.collection);
+
+        var selectors = {
+            geometry: {_id:options.geometry},
+            material: {_id:options.material}
+        };
+
+        domElement.value = false;
+        domElement.slot  = options.slot;
+        domElement.name  = options.name;
+
+        collection.findOne( selectors.geometry ).then(function(json){
+
+            if ( !json ) throw `No data returned for ${collection.name} ${options.geometry}.`;
+
+            var loader = new THREE.JSONLoader();
+            return loader.parse( json );
+
+        }).then(function(object){
+
+            if ( !object ) throw `No object returned for ${collection.name} ${options.geometry}.`;
+
+            var geometry = object.geometry;
+            geometry.computeFaceNormals();
+            geometry.computeVertexNormals();
+            geometry.computeBoundingBox();
+            geometry.computeBoundingSphere();
+
+            return db.collection("materials").findOne(selectors.material, function(err){
+                if (err) throw err;
+            }).then(function( json ){
+
+                if (json) {
+
+                    var material = materialfromJSON( json );
+                    return new THREE.SkinnedMesh( geometry, material );
+
+                }
+
+            //  else... if none material json returned...
+
+                if (!!object.materials && object.materials.length > 0) {
+                    var material = new THREE.MeshFaceMaterial( object.materials );
+                    material.materials.forEach(function(mtl, i){
+                        material.materials[i].skinning = true;    // important!
+                    });
+
+                } else {
+                    var material = new THREE.MeshFaceMaterial([
+                        new THREE.MeshStandardMaterial({skinning:true}) 
+                    ]);
+                }
+
+                return new THREE.SkinnedMesh( geometry, material );
+
+            });
+
+        }).then(function(skinned){
+
+            skinned.renderDepth = 1;
+            skinned.frustumCulled = false; // important!
+            skinned.scale.set( 1, 1, 1 );
+            skinned.position.set( 0, 0, 0 );
+            skinned.rotation.set( 0, 0, 0 ); 
+
+            domElement.cache = skinned;
+            debugMode && console.dir(domElement);
+
+            if ( store(gender) && store(gender).filter(function(selector){ 
+                return selector == options.selector; 
+            }).length ) {
+                $(domElement).val(true);
+                $(domElement).find("a").text(`Remove ${domElement.name}`);
+                localPlayer.outfit.add( {[domElement.slot]: domElement.cache} );
+            } else {
+                $(domElement).val(false);
+                $(domElement).find("a").text(`Add ${domElement.name}`);
+            }
+
+        }).catch(function(err){
+            console.error(err);
+        });
+
+    }
+
+    function onOutfitChangedEventHandler( helper ){
+        debugMode && console.dir("helper:", helper);
+
+        var gender = localPlayer.outfit.getGender();
+        debugMode && console.log("gender:", gender);
+
+        if (!helper.value) {
+            $(helper).find("a").text(`Add ${helper.name}`);
+        } else {
+            $(helper).find("a").text(`Remove ${helper.name}`);
+        }
+        debugMode && console.log("value:", helper.value);
+
+        if ( !gender ) return;
+
+    //  GET HELPERS STATE.
+        var selector = [".outfit-helper", gender].join(".");
+        debugMode && console.log("selector:", selector);
+
+        var outfithelperStates = $( selector ).toArray()
+        .filter( function( element ){ 
+            return element.value; 
+        }).map( function( element ){ 
+            return "." + element.className.replace(" hidden", "").split(" ").join("."); 
+        });
+
+        debugMode && console.log(outfithelperStates);
+
+    //  SAVE HELPERS STATE.
+        store({ [gender]: outfithelperStates });
+
+    }
+
+    function onUpdateOutfitState( gender ){
+
+        if ( !gender ) return;
+
+    //  UPDATE OUTFIT STATE.
+        var selector = [outfitHelperSelector, gender].join(".");
+
+        var outfithelperStates = $( selector ).toArray()
+        .filter( function( element ){ 
+            return element.value; 
+        }).map( function( element ){ 
+            return "." + element.className.replace(" hidden", "").split(" ").join("."); 
+        });
+
+        store({ [gender]: outfithelperStates });
+
+    }
+
+//  Event listeners.
+    mySignals.started.addOnce( function( element ){
+
+        element.value = false;
+        localPlayer.holder.visible = false;
+
+        if ( element.value ) {
+            var text = $(element).find("a").text().replace("Show", "Hide");
+        } else {
+            var text = $(element).find("a").text().replace("Hide", "Show");
+        }
+
+        $(element).find("a").text( text );
+    });
+
+//  Dispatch events.
+    mySignals.started.dispatch( $(playerHelperSelector).get(0) );
+//  mySignals.outfitChanged.add(onOutfitChangedEventHandler);
+
+    //  Female.
+
+    mySignals.initilized.dispatch({
+        name: "skeleton",                            // helper name.
+        slot: "body",                                // outfit slot.
+        geometry: "skeleton",                        // geometry _id.
+        material: "HF_SkeletonMaterial",             // material _id.
+        selector: ".outfit-helper.female.skeleton",  // helper selector.
+        collection: "female",                        // collection name.
+    });
+
+    mySignals.initilized.dispatch({
+        name: "body",
+        slot: "body",
+        geometry: "body",
+        material: "HF_BodyMaterial",
+        selector: ".outfit-helper.female.body",
+        collection: "female",
+    });
+
+    mySignals.initilized.dispatch({
+        name: "hairs",
+        slot: "hairs",
+        geometry: "hairs",
+        material: "HF_HairsMaterial",
+        selector: ".outfit-helper.female.hairs",
+        collection: "female",
+    });
+
+    mySignals.initilized.dispatch({
+        name: "underwears",
+        slot: "underwears",
+        geometry: "underwears",
+        material: "HF_UnderwearsMaterial",
+        selector: ".outfit-helper.female.underwears",
+        collection: "female",
+    });
+
+    mySignals.initilized.dispatch({
+        name: "stockings",
+        slot: "stockings",
+        geometry: "stockings",
+        material: "HF_StockingsMaterial",
+        selector: ".outfit-helper.female.stockings",
+        collection: "female",
+    });
+
+    mySignals.initilized.dispatch({
+        name: "dress",
+        slot: "costume",
+        geometry: "dress",
+        material: "HF_DressMaterial",
+        selector: ".outfit-helper.female.dress",
+        collection: "female",
+    });
+
+    mySignals.initilized.dispatch({
+        name: "costume",
+        slot: "costume",
+        geometry: "uniform",
+        material: "HF_UniformMaterial",
+        selector: ".outfit-helper.female.costume",
+        collection: "female",
+    });
+
+    mySignals.initilized.dispatch({
+        name: "trousers",
+        slot: "trousers",
+        geometry: "jeans",
+        material: "HF_JeansMaterial",
+        selector: ".outfit-helper.female.trousers",
+        collection: "female",
+    });
+
+    mySignals.initilized.dispatch({
+        name: "shoes",
+        slot: "shoes",
+        geometry: "shoes",
+        material: "HF_ShoesMaterial",
+        selector: ".outfit-helper.female.shoes",
+        collection: "female",
+    });
+
+    //  Male. 
+
+    mySignals.initilized.dispatch({
+        name: "skeleton",
+        slot: "body",
+        geometry: "skeleton",
+        material: "HF_SkeletonMaterial",
+        selector: ".outfit-helper.male.skeleton",
+        collection: "male",
+    });
+
+    mySignals.initilized.dispatch({
+        name: "body",
+        slot: "body",
+        geometry: "body",
+        material: "HM_BodyMaterial",
+        selector: ".outfit-helper.male.body",
+        collection: "male",
+    });
+
+    mySignals.initilized.dispatch({
+        name: "hairs",
+        slot: "hairs",
+        geometry: "hairs",
+        material: "HM_HairsMaterial",
+        selector: ".outfit-helper.male.hairs",
+        collection: "male",
+    });
+
+    mySignals.initilized.dispatch({
+        name: "underwears",
+        slot: "underwears",
+        geometry: "underwears",
+        material: "HM_UnderwearsMaterial",
+        selector: ".outfit-helper.male.underwears",
+        collection: "male",
+    });
+
+    mySignals.initilized.dispatch({
+        name: "costume",
+        slot: "costume",
+        geometry: "uniform",
+        material: "HM_UniformMaterial",
+        selector: ".outfit-helper.male.costume",
+        collection: "male",
+    });
+
+    mySignals.initilized.dispatch({
+        name: "trousers",
+        slot: "trousers",
+        geometry: "jeans",
+        material: "HM_JeansMaterial",
+        selector: ".outfit-helper.male.trousers",
+        collection: "male",
+    });
+
+    mySignals.initilized.dispatch({
+        name: "shoes",
+        slot: "shoes",
+        geometry: "sneakers",
+        material: "HM_SneakersMaterial",
+        selector: ".outfit-helper.male.shoes",
+        collection: "male",
+    });
+
+    mySignals.initilized.removeAll();
+
+
+
+
+
+//  Outfit helpers.
+    $(outfitHelperSelector).on("click", function(){
+
+        this.value = !this.value;
+        var object = {[this.slot]: this.cache};
+        var command = new ChangeOutfitItemCommand(this);
+        if (command) command.execute();
+
+    });
+
+})();
+*/
+</script>
+
+<script>
+/*
+(function(){
+
+    const outfitGenderSelector = "#gender-droplist";
+    const outfitHelperSelector = ".outfit-helper";
+    const outfitHelpersTabSelector = ".outfit-helpers.component-pane.tab-pane";
+    const maleOutfitHelpersSelector = "#male-outfit-helpers";
+    const femaleOutfitHelpersSelector = "#female-outfit-helpers";
+
+    var Signal = signals.Signal;
+
+    var mySignals = {
+        started: new Signal(),
+        initilized: new Signal(),
+        genderChanged: new Signal(),
+    };
+
+    function onGenderChangedEventHandler( object ){
+    //  object: the "localPlayer.outfit".
+        debugMode && console.log("onGenderChangedEventHandler:", object);
+
+    //  Stop animation.
+        object.AnimationsHandler.stop();
+        localPlayer.controller.isRunning = false;
+        localPlayer.controller.isWalking = false;
+        localPlayer.controller.isIdling  = true;
+        localPlayer.controller.movementSpeed = 0;
+
+    //  Remove outfit.
+        object.removeAll();
+
+    //  Set all outfit helpers values to false; //  important!
+        $(outfitHelperSelector).val( false );   //  important!
+        $(outfitHelpersTabSelector).removeClass("in active");
+
+    //  Gender has been changed when command executed.
+        var gender = object.getGender();
+        $(outfitGenderSelector).val(gender);
+        debugMode && console.log("gender:", gender);
+
+        if ( !gender ) {
+            var helper = $(".outfit-helper.male.skeleton").get(0);
+            object.add({body:helper.cache});
+            object.AnimationsHandler.play("idle");
+            localPlayer.controller.dispatchEvent({type:"startIdling"});
+            return; // important!
+        }
+
+        if ( gender == "male" )
+            $(maleOutfitHelpersSelector).addClass("in active");
+
+        if ( gender == "female" )
+            $(femaleOutfitHelpersSelector).addClass("in active");
+
+        debugMode && console.log(gender, store(gender));
+
+        store( gender ) instanceof Array && 
+        store( gender ).forEach(function( selector ){
+            $(selector).val( true );
+            var helper = $(selector).get(0);
+            $(helper).find("a").text(`Remove ${helper.name}`);
+            object.add( {[helper.slot]: helper.cache} );
+        });
+
+    //  Play idle animation.
+        object.AnimationsHandler.play("idle");
+        localPlayer.controller.dispatchEvent({type:"startIdling"});
+
+    //  Save gender.
+        store({gender:gender}); // important!
+
+    }
+
+})();
+*/
+</script>
+
+
+
+        <!-- OUTFIT TAB EDITOR -->
+
+<script>
+/*
+    var AddOutfitCommand = function( object, helper ){
+
+        Command.call( this );
+
+        this.type = "AddOutfitCommand";
+
+        this.object = object;
+        this.helper = helper;
+        this.gender = localPlayer.outfit.getGender();
+        this.slot = Object.keys(object)[0];
+
+        if ( this.object != undefined ) {
+            this.name = "Add Outfit: " + this.slot;
+        }
+
+    };
+
+    AddOutfitCommand.prototype = {
+
+        execute: function () {
+            this.helper.value = true;
+            localPlayer.outfit.add( this.object );
+            this.editor.signals.outfitChanged.dispatch( this.helper );
+            debugMode && console.log( this );
+        },
+
+        undo: function () {
+            this.helper.value = false;
+            localPlayer.outfit.remove( this.slot );
+            this.editor.signals.outfitChanged.dispatch( this.helper );
+            debugMode && console.log( this );
+        },
+
+        toJSON: function () {
+
+            var output = Command.prototype.toJSON.call( this );
+            output.object = this.editor.toJSON( this.object );
+
+            return output;
+        },
+
+        fromJSON: function ( json ) {
+
+            Command.prototype.fromJSON.call( this, json );
+            this.object = this.editor.fromJSON( json.object );
+
+            if ( this.object == undefined ) {
+                throw "object not defined!";
+            }
+
+        },
+
+    };
+*/
+</script>
+
+<script>
+/*
+    var RemoveOutfitCommand = function( object, helper ){
+
+        Command.call( this );
+
+        this.type = "RemoveOutfitCommand";
+
+        this.object = object;
+        this.helper = helper;
+        this.gender = localPlayer.outfit.getGender();
+        this.slot = Object.keys(object)[0];
+        this.name = "Remove Outfit: " + this.slot;
+
+    };
+
+    RemoveOutfitCommand.prototype = {
+
+        execute: function () {
+            this.helper.value = false;
+            localPlayer.outfit.remove( this.slot );
+            this.editor.signals.outfitChanged.dispatch( this.helper );
+            debugMode && console.log( this );
+        },
+
+        undo: function () {
+            this.helper.value = true;
+            localPlayer.outfit.add( this.object );
+            this.editor.signals.outfitChanged.dispatch( this.helper );
+            debugMode && console.log( this );
+        },
+
+        toJSON: function () {
+
+            var output = Command.prototype.toJSON.call( this );
+            output.object = this.editor.toJSON( this.object );
+
+            return output;
+        },
+
+        fromJSON: function ( json ) {
+
+            Command.prototype.fromJSON.call( this, json );
+            this.object = this.editor.fromJSON( json.object );
+
+            if ( this.object == undefined ) {
+                throw "object not defined!";
+            }
+
+        },
+
+    };
+*/
+</script>
+
+<script>
+/*
+    var OutfitEditor = function(){
+
+        var Signal = signals.Signal;
+
+        this.signals = {
+
+            stopPlayer: new Signal(),  // debug.
+            startPlayer: new Signal(), // debug.
+
+            started: new Signal(),
+            initilized: new Signal(),
+
+            outfitAdded: new Signal(),
+            outfitRemoved: new Signal(),
+
+            genderChanged: new Signal(),
+            outfitChanged: new Signal(),
+            historyChanged: new Signal(),
+
+        };
+
+
+        this.config = new Config();
+        this.history = new History( this );
+
+
+        this.scene = scene;
+        this.camera = camera;
+        this.sceneHelpers = new THREE.Scene();
+
+
+        this.object = {}; // localPlayer.outfit ??
+
+        this.textures = {};
+        this.materials = {};
+        this.geometries = {};
+        this.animations = {};
+        this.selected = null;
+
+    };
+
+//  METHODS.
+
+    OutfitEditor.prototype = {
+
+        setGender: function(gender){},
+
+        addOutfit: function (object){},
+        removeOutfit: function(name){},
+
+        addGeometry: function(geometry){},
+        addMaterial: function(material){},
+        addTexture: function(texture){},
+
+        removeGeometry: function(geometry){},
+        removeMaterial: function(material){},
+        removeTexture: function(texture){},
+
+        reset: function(){},
+
+        select: function(object){
+            console.log("[FAKE] object selected.");
+        },
+
+        deselect: function(){
+            console.log("[FAKE] object deselected.");
+        },
+
+        execute: function(command, optionalName){
+            this.history.execute( command, optionalName );
+        },
+
+        toJSON: function(){
+            console.log("[FAKE] object to JSON.");
+        },
+
+        fromJSON: function(json){
+            console.log("[FAKE] object from JSON.");
+        },
+
+        redo: function(){},
+        undo: function(){},
+
+    };
+*/
+</script>
+
+
+<script>
+/*
+(function(){
+
+    const outfitGenderSelector = "#gender-droplist";
+    const outfitHelperSelector = ".outfit-helper";
+    const outfitHelpersTabSelector = ".outfit-helpers.component-pane.tab-pane";
+    const maleOutfitHelpersSelector = "#male-outfit-helpers";
+    const femaleOutfitHelpersSelector = "#female-outfit-helpers";
+
+    var Signal = signals.Signal;
+
+    var mySignals = {
+        started: new Signal(),
+        changed: new Signal(),
+        updated: new Signal(),
+    };
+
+//  Event handlers.
+
+    function onOutfitHelperEventHandler( element ){
+
+        element.value = !element.value;
+        if (!element.value) {
+            localPlayer.outfit.remove( element.slot );
+            $(element).find("a").text(`Add ${element.name}`);
+        } else {
+            localPlayer.outfit.add( {[element.slot]: element.cache} );
+            $(element).find("a").text(`Remove ${element.name}`);
+        }
+
+    }
+
+    function onChangeEventHandler( value ){
+
+    //  Save gender state.
+        if ( value ) store({gender: value});
+
+    //  Stop animation.
+        localPlayer.outfit.AnimationsHandler.stop();
+        localPlayer.controller.isRunning = false;
+        localPlayer.controller.isWalking = false;
+        localPlayer.controller.isIdling  = true;
+        localPlayer.controller.movementSpeed = 0;
+
+    //  Remove outfit.
+        localPlayer.outfit.removeAll();
+
+    //  Change gender. "this" is the droplist.
+        localPlayer.outfit.setGender( value );
+
+    //  Set all outfit helpers values to false; //  important!
+        $(outfitHelperSelector).val( false );   //  important!
+        $(outfitHelpersTabSelector).removeClass("in active");
+
+        switch ( value ){
+
+            case "":
+                var helper = $(".outfit-helper.male.skeleton").get(0);
+                localPlayer.outfit.add({body:helper.cache});
+                localPlayer.outfit.AnimationsHandler.play("idle");
+                localPlayer.controller.dispatchEvent({type:"startIdling"});
+                return; // important!
+            break;
+
+            case "male":
+                $(maleOutfitHelpersSelector).addClass("in active");
+            break;
+
+            case "female":
+                $(femaleOutfitHelpersSelector).addClass("in active");
+            break;
+
+        }
+
+        store( value ).forEach(function( selector ){
+            $(selector).val( true );
+            var helper = $(selector).get(0);
+            $(helper).find("a").text(`Remove ${helper.name}`);
+            localPlayer.outfit.add( {[helper.slot]: helper.cache} );
+        });
+
+    //  Play idle animation.
+        localPlayer.outfit.AnimationsHandler.play("idle");
+        localPlayer.controller.dispatchEvent({type:"startIdling"});
+
+    }
+
+
+//  Event listeners.
+
+    mySignals.started.addOnce(function(){
+        var value = store("gender");
+        $("#gender-droplist").val(value);
+        onChangeEventHandler( value );
+    });
+
+    mySignals.changed.add(onChangeEventHandler);
+
+
+//  Dispatch events.
+
+    mySignals.started.dispatch();
+
+//    $(outfitGenderSelector).on("change", function(){
+//        mySignals.changed.dispatch( this.value );
+//    });
+
+})();
+*/
+</script>
+
+<script>
+/*
+(function(){
+
+//  OUTFIT HELPERS.
+
+//  Outfit helpers is main and most important helpers for outfit.
+//  Must included when a tab imported in an page even if we dont
+//  want to be used by the user (as hidden). Outfit helper loads 
+//  and cache the outfit skinned meshes of the avatar.
+//  All skinned mesh values and tasks must refers to the outfit
+//  helpers cached skinned meshes. Local player outfits (slots)
+//  also refers to these outfit helpers cached skinned meshes.
+
+    const outfitHelperSelector = ".outfit-helper";
+    const playerHelperSelector = "#player-helper";
+    const outfitGenderSelector = "#gender-droplist";
+
+    var Signal = signals.Signal;
+
+    var mySignals = {
+    //  started: new Signal(),
+        clicked: new Signal(),
+        updated: new Signal(),
+    //  initilized: new Signal(),
+    };
+
+//  Event handlers.
+
+    function onInitOutfitHelper(options){
+
+    //  INIT OUTFIT HELPER (returns a promise resolved with the helper domElement).
+
+    //    name: "skeleton",                            // helper name.
+    //    slot: "body",                                // outfit slot.
+    //    geometry: "skeleton",                        // geometry _id.
+    //    material: "HF_SkeletonMaterial",             // material _id.
+    //    selector: ".outfit-helper.female.skeleton",  // helper selector.
+    //    collection: "female",                        // collection name.
+
+        var gender = store("gender");
+        var domElement = $(options.selector).get(0);
+        var collection = db.collection(options.collection);
+
+        var selectors = {
+            geometry: {_id:options.geometry},
+            material: {_id:options.material}
+        };
+
+        domElement.value = false;
+        domElement.slot  = options.slot;
+        domElement.name  = options.name;
+
+        collection.findOne( selectors.geometry ).then(function(json){
+
+            if ( !json ) throw `No data returned for ${collection.name} ${options.geometry}.`;
+
+            var loader = new THREE.JSONLoader();
+            return loader.parse( json );
+
+        }).then(function(object){
+
+            if ( !object ) throw `No object returned for ${collection.name} ${options.geometry}.`;
+
+            var geometry = object.geometry;
+            geometry.computeFaceNormals();
+            geometry.computeVertexNormals();
+            geometry.computeBoundingBox();
+            geometry.computeBoundingSphere();
+
+            return db.collection("materials").findOne(selectors.material, function(err){
+                if (err) throw err;
+            }).then(function( json ){
+
+                if (json) {
+
+                    var material = materialfromJSON( json );
+                    return new THREE.SkinnedMesh( geometry, material );
+
+                }
+
+            //  else... if none material json returned...
+
+                if (!!object.materials && object.materials.length > 0) {
+                    var material = new THREE.MeshFaceMaterial( object.materials );
+                    material.materials.forEach(function(mtl, i){
+                        material.materials[i].skinning = true;    // important!
+                    });
+
+                } else {
+                    var material = new THREE.MeshFaceMaterial([
+                        new THREE.MeshStandardMaterial({skinning:true}) 
+                    ]);
+                }
+
+                return new THREE.SkinnedMesh( geometry, material );
+
+            });
+
+        }).then(function(skinned){
+
+            skinned.renderDepth = 1;
+            skinned.frustumCulled = false; // important!
+            skinned.scale.set( 1, 1, 1 );
+            skinned.position.set( 0, 0, 0 );
+            skinned.rotation.set( 0, 0, 0 ); 
+
+            domElement.cache = skinned;
+            debugMode && console.dir(domElement);
+
+            if ( store(gender) && store(gender).filter(function(selector){ 
+                return selector == options.selector; 
+            }).length ) {
+                $(domElement).val(true);
+                $(domElement).find("a").text(`Remove ${domElement.name}`);
+                localPlayer.outfit.add( {[domElement.slot]: domElement.cache} );
+            } else {
+                $(domElement).val(false);
+                $(domElement).find("a").text(`Add ${domElement.name}`);
+            }
+
+        }).catch(function(err){
+            console.error(err);
+        });
+
+    }
+
+
+    function onClickEventHandler( element ){
+
+        element.value = !element.value;
+        if (!element.value) {
+            localPlayer.outfit.remove( element.slot );
+            $(element).find("a").text(`Add ${element.name}`);
+        } else {
+            localPlayer.outfit.add( {[element.slot]: element.cache} );
+            $(element).find("a").text(`Remove ${element.name}`);
+        }
+
+    }
+
+    function onUpdateOutfitState( gender ){
+        if ( !gender ) return;
+
+    //  UPDATE OUTFIT STATE.
+        var selector = [outfitHelperSelector, gender].join(".");
+
+        var outfithelperStates = $( selector ).toArray()
+        .filter( function( element ){ 
+            return element.value; 
+        }).map( function( element ){ 
+            return "." + element.className.replace(" hidden", "").split(" ").join("."); 
+        });
+
+        store({ [gender]: outfithelperStates });
+
+    }
+
+
+//  Event listeners.
+
+    mySignals.started.addOnce(function(){
+        localPlayer.outfit.setGender( store("gender") );
+    });
+
+    mySignals.initilized.add(onInitOutfitHelper);
+    mySignals.clicked.add(onClickEventHandler);
+    mySignals.updated.add(onUpdateOutfitState);
+
+//  Dispatch Events.
+
+//  mySignals.started.dispatch();
+
+    //  Female.
+    mySignals.initilized.dispatch({
+        name: "skeleton",                            // helper name.
+        slot: "body",                                // outfit slot.
+        geometry: "skeleton",                        // geometry _id.
+        material: "HF_SkeletonMaterial",             // material _id.
+        selector: ".outfit-helper.female.skeleton",  // helper selector.
+        collection: "female",                        // collection name.
+    });
+
+    mySignals.initilized.dispatch({
+        name: "body",
+        slot: "body",
+        geometry: "body",
+        material: "HF_BodyMaterial",
+        selector: ".outfit-helper.female.body",
+        collection: "female",
+    });
+
+    mySignals.initilized.dispatch({
+        name: "hairs",
+        slot: "hairs",
+        geometry: "hairs",
+        material: "HF_HairsMaterial",
+        selector: ".outfit-helper.female.hairs",
+        collection: "female",
+    });
+
+    mySignals.initilized.dispatch({
+        name: "underwears",
+        slot: "underwears",
+        geometry: "underwears",
+        material: "HF_UnderwearsMaterial",
+        selector: ".outfit-helper.female.underwears",
+        collection: "female",
+    });
+
+    mySignals.initilized.dispatch({
+        name: "stockings",
+        slot: "stockings",
+        geometry: "stockings",
+        material: "HF_StockingsMaterial",
+        selector: ".outfit-helper.female.stockings",
+        collection: "female",
+    });
+
+    mySignals.initilized.dispatch({
+        name: "dress",
+        slot: "costume",
+        geometry: "dress",
+        material: "HF_DressMaterial",
+        selector: ".outfit-helper.female.dress",
+        collection: "female",
+    });
+
+    mySignals.initilized.dispatch({
+        name: "costume",
+        slot: "costume",
+        geometry: "uniform",
+        material: "HF_UniformMaterial",
+        selector: ".outfit-helper.female.costume",
+        collection: "female",
+    });
+
+    mySignals.initilized.dispatch({
+        name: "trousers",
+        slot: "trousers",
+        geometry: "jeans",
+        material: "HF_JeansMaterial",
+        selector: ".outfit-helper.female.trousers",
+        collection: "female",
+    });
+
+    mySignals.initilized.dispatch({
+        name: "shoes",
+        slot: "shoes",
+        geometry: "shoes",
+        material: "HF_ShoesMaterial",
+        selector: ".outfit-helper.female.shoes",
+        collection: "female",
+    });
+
+    //  Male. 
+
+    mySignals.initilized.dispatch({
+        name: "skeleton",
+        slot: "body",
+        geometry: "skeleton",
+        material: "HF_SkeletonMaterial",
+        selector: ".outfit-helper.male.skeleton",
+        collection: "male",
+    });
+
+    mySignals.initilized.dispatch({
+        name: "body",
+        slot: "body",
+        geometry: "body",
+        material: "HM_BodyMaterial",
+        selector: ".outfit-helper.male.body",
+        collection: "male",
+    });
+
+    mySignals.initilized.dispatch({
+        name: "hairs",
+        slot: "hairs",
+        geometry: "hairs",
+        material: "HM_HairsMaterial",
+        selector: ".outfit-helper.male.hairs",
+        collection: "male",
+    });
+
+    mySignals.initilized.dispatch({
+        name: "underwears",
+        slot: "underwears",
+        geometry: "underwears",
+        material: "HM_UnderwearsMaterial",
+        selector: ".outfit-helper.male.underwears",
+        collection: "male",
+    });
+
+    mySignals.initilized.dispatch({
+        name: "costume",
+        slot: "costume",
+        geometry: "uniform",
+        material: "HM_UniformMaterial",
+        selector: ".outfit-helper.male.costume",
+        collection: "male",
+    });
+
+    mySignals.initilized.dispatch({
+        name: "trousers",
+        slot: "trousers",
+        geometry: "jeans",
+        material: "HM_JeansMaterial",
+        selector: ".outfit-helper.male.trousers",
+        collection: "male",
+    });
+
+    mySignals.initilized.dispatch({
+        name: "shoes",
+        slot: "shoes",
+        geometry: "sneakers",
+        material: "HM_SneakersMaterial",
+        selector: ".outfit-helper.male.shoes",
+        collection: "male",
+    });
+
+    mySignals.initilized.removeAll();
+
+//  Dispatch Events.
+
+    $(outfitHelperSelector).on("click", function(){
+        mySignals.clicked.dispatch( this );
+        mySignals.updated.dispatch( localPlayer.outfit.getGender() );
+    });
+
+})();
+*/
+</script>
+
+
+
+
+<script>
+/*
+(function(){
+
+//  Event listeners.
+    mySignals.initilized.add(onInitOutfitHelper);
+    mySignals.started.addOnce(function(){
+        var value = store("gender");
+        $("#gender-droplist").val(value);
+        var command = new SetGenderCommand(value);
+        outfitTab.execute( command );
+    });
+    mySignals.genderChanged.add(onGenderChangedEventHandler);
+
+
+//  Dispatch events.
+    mySignals.started.dispatch();
+
+//  Gender droplist.
+    $(outfitGenderSelector).on("change", function(){
+
+        var command = new SetGenderCommand( this.value );
+        if (command) command.execute();
+
+    });
+
+})();
+*/
+</script>
+
+<script>
+
+/*
+        var kind = "texture";
+        var slot = $(outfitDroplistSelector).val();
+        var gender = localPlayer.outfit.getGender();
+
+    //  Current db.version: 3
+        pager.options.selectors = {
+
+            kind:   kind,
+            slot:   slot,
+            gender: gender,
+
+        };
+
+        pager.options.skip = 0; // imporant!
+        pager.options.collection = slot; 
+
+        pager.init();
+
+        pageChanged.dispatch();
+
+
+        if ( !$(genderDroplistSelector).val() ) {
+
+            $(pager.from).text( "zero" );
+            $(pager.upto).text( "zero" );
+            $(pager.counter).text("none");
+            $(displayObjectSelector).html( `<h2>no gender!</h2>` );
+
+            return;
+        }
+
+        if ( !$(outfitDroplistSelector).val() ) {
+
+            $(pager.from).text( "zero" );
+            $(pager.upto).text( "zero" );
+            $(pager.counter).text("none");
+            $(displayObjectSelector).html( `<h2>no outfit!</h2>` );
+
+            return;
+        }
+
+        if ( !db._cols[ $(outfitDroplistSelector).val() ] ) {
+
+            $(pager.from).text( "zero" );
+            $(pager.upto).text( "zero" );
+            $(pager.counter).text("none");
+            $(displayObjectSelector).html( `<h2>no collection!</h2>` );
+
+            return;
+        }
+*/
+
+/*
+        var bodyHelper = $(`.outfit-helper.${gender}.body`).get(0);
+        var eyesHelper = $(`.outfit-helper.${gender}.eyes`).get(0);
+        var skeletonHelper = $(`.outfit-helper.${gender}.skeleton`).get(0);
+
+
+        if ( !localPlayer.outfit.body ) {
+            $(bodyHelper).find("a").text(`Add ${bodyHelper.name}`);
+            $(eyesHelper).find("a").text(`Add ${eyesHelper.name}`);
+            $(skeletonHelper).find("a").text(`Add ${skeletonHelper.name}`);
+        }
+
+
+        if ( localPlayer.outfit.body == bodyHelper.cache ) {
+
+            $(bodyHelper).find("a").text(`Remove ${bodyHelper.name}`);
+            $(eyesHelper).find("a").text(`Remove ${eyesHelper.name}`);
+            $(skeletonHelper).find("a").text(`Add ${skeletonHelper.name}`);
+
+        } else {
+
+            $(bodyHelper).find("a").text(`Add ${bodyHelper.name}`);
+            $(eyesHelper).find("a").text(`Add ${eyesHelper.name}`);
+            $(skeletonHelper).find("a").text(`Remove ${skeletonHelper.name}`);
+
+        }
+
+    //  Get helpers state.
+        var selector = [".outfit-helper", gender].join(".");
+
+        var outfithelperStates = $( selector ).toArray()
+        .filter( function( element ){ 
+            return ( !!localPlayer.outfit[element.slot] && localPlayer.outfit[element.slot] == element.cache ); 
+        }).map( function( element ){ 
+            return "." + element.className.replace(" hidden", "").split(" ").join("."); 
+        });
+
+    //  Do not save helpers state.
+    //  store({ [gender]: outfithelperStates });
+*/
+</script>
+
+
+<script>
+/*
+    var SetOutfitBodyCommand = function( options ){
+
+        Command.call( this );
+
+        this.type = "SetOutfitBodyCommand";
+        this.name = `Outfit ${options.gender} ${options.name}`;
+
+        this.slot = options.slot;
+        this.gender = options.gender; 
+        this.selector = options.selector;                 // "." + options.domElement.className.split(" ").join(".");
+        this.bodySelector = options.bodySelector;         // {[options.bodyHelper.slot]: options.bodyHelper.cache};
+        this.eyesSelector = options.eyesSelector;         // {[options.eyesHelper.slot]: options.eyesHelper.cache};
+        this.skeletonSelector = options.skeletonSelector; // {[options.skeletonHelper.slot]: options.skeletonHelper.cache};
+
+        this.domElement = $(options.selector).get(0);
+
+    };
+
+    SetOutfitBodyCommand.prototype = {
+
+        execute: function () {
+
+            if ( !localPlayer.outfit.body || 
+                  localPlayer.outfit.body != this.domElement.cache ) { 
+               // "this.domElement.cache" is always the "body mesh".
+
+                var bodyHelper = $(this.bodySelector).get(0);
+                var eyesHelper = $(this.eyesSelector).get(0);
+
+                var body = {[bodyHelper.slot]: bodyHelper.cache};
+                var eyes = {[eyesHelper.slot]: eyesHelper.cache};
+
+                localPlayer.outfit.add(body, eyes);
+
+            } else {
+
+                var bodyHelper = $(this.bodySelector).get(0);
+                var skeletonHelper = $(this.skeletonSelector).get(0);
+                var skeleton = {[bodyHelper.slot]: skeletonHelper.cache};
+
+                localPlayer.outfit.removeAll();
+                localPlayer.outfit.add( skeleton );
+
+            }
+
+            outfitBodyChanged.dispatch( this );
+        },
+
+        undo: function () {
+
+            if ( !localPlayer.outfit.body || 
+                  localPlayer.outfit.body != this.domElement.cache ) { 
+               // "this.domElement.cache" is always the "body mesh".
+
+                var bodyHelper = $(this.bodySelector).get(0);
+                var eyesHelper = $(this.eyesSelector).get(0);
+
+                var body = {[bodyHelper.slot]: bodyHelper.cache};
+                var eyes = {[eyesHelper.slot]: eyesHelper.cache};
+
+                localPlayer.outfit.add(body, eyes);
+
+            } else {
+
+                var bodyHelper = $(this.bodySelector).get(0);
+                var skeletonHelper = $(this.skeletonSelector).get(0);
+                var skeleton = {[bodyHelper.slot]: skeletonHelper.cache};
+
+                localPlayer.outfit.removeAll();
+                localPlayer.outfit.add( skeleton );
+
+            }
+            
+            outfitBodyChanged.dispatch( this );
+        },
+
+
+        toJSON: function () {
+
+            var output = Command.prototype.toJSON.call( this );
+
+            output.slot = this.slot
+            output.gender = this.gender;
+            output.selector = this.selector;
+            output.bodySelector = this.bodySelector;
+            output.eyesSelector = this.eyesSelector;
+            output.skeletonSelector = this.skeletonSelector;
+
+            return output;
+        },
+
+        fromJSON: function ( json ) {
+
+            Command.prototype.fromJSON.call( this, json );
+
+            this.slot = json.slot;
+            this.gender = json.gender; // localPlayer.outfit.getGender();
+            this.selector = json.selector;
+            this.domElement = $(json.selector).get(0);
+
+            if ( this.domElement == undefined ) {
+                throw "dom element not found!";
+            }
+
+            this.bodySelector = json.bodySelector;
+            this.eyesSelector = json.eyesSelector;
+            this.skeletonSelector = json.skeletonSelector;
+
+        },
+
+    };
+*/
+
+/*
+    OutfitHistory.execute( new SetOutfitBodyCommand({
+        gender: gender,
+        name: this.name,
+        slot: this.slot,
+        selector: `.outfit-helper.${gender}.body`,
+        bodySelector: `.outfit-helper.${gender}.body`,
+        eyesSelector: `.outfit-helper.${gender}.eyes`,
+        skeletonSelector: `.outfit-helper.${gender}.skeleton`,
+    }) );
+*/
+
+/*
+    var outfitBodyChanged = new Signal();
+
+    outfitBodyChanged.add( function( command ){
+        debugMode && console.log( "command:", command );
+
+    //  Reset helpers text.
+        $(`.outfit-helper.${command.gender}`).toArray()
+        .forEach(function( helper ){
+            $(helper).find("a").text(`Add ${helper.name}`);
+        });
+
+
+        if ( localPlayer.outfit.body == command.domElement.cache ) {
+
+        //  Get helpers state.
+            var outfitSelectors = store( command.gender );
+            debugMode && console.log(outfitSelectors);
+
+        //  Update helpers text.
+            if ( outfitSelectors instanceof Array ) {
+                outfitSelectors.forEach(function( selector ){
+                    var helper = $(selector).get(0);
+                    $(helper).find("a").text(`Remove ${helper.name}`);
+                    localPlayer.outfit.add( {[helper.slot]: helper.cache} );
+                });
+            }
+        }
+
+    });
+*/
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
