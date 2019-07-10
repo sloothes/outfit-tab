@@ -341,7 +341,7 @@
     <div id="outfits-catalog" class="well">
 
         <h4>Choose texture:
-            <div id="itmcount" class="pull-right small" style="margin-top:4px;color:#ddd;">
+            <div id="counter" class="pull-right small" style="margin-top:4px;color:#ddd;">
                 <span id="from">zero</span>
                 to <span id="upto">zero</span>
                 of <span id="count">none</span>
@@ -408,4 +408,34 @@
 
 </script>
 
+<script>
+
+(function(){
+
+    var collection = UserDB.collection("materials");
+
+    function count(){
+        var i = 0; 
+        var cursor = collection.find();
+        cursor.forEach(function(){++i;});
+        return i;
+    }
+
+    $("#counter").find("#count").text(count());
+
+
+
+
+
+
+
+
+
+
+
+
+
+})();
+
+</script>
 
