@@ -3,7 +3,7 @@
 (function(){
     var component_ID = {
         type: "tab",
-        version: "2.1",
+        version: "2.2",
         kind: "component",
         name: "outfits-tab.html",
         description: "costumizes outfit of local player.",
@@ -263,4 +263,118 @@
 })();
 
 </script>
+
+        <!-- COSTUMIZE OUTFIT -->
+
+<style>
+
+    #outfits-catalog {
+        max-width:475px;
+        max-height:660px;
+        color:#fff;
+        border:none;
+        padding:0px;
+        background-color:#fff0;
+    }
+
+    .catalog-item {
+        width:85px;
+        height:85px;
+        margin:4px;
+        background-size: contain;
+        background-position:50% 50%;
+        background-repeat:no-repeat;
+    }
+
+    .btn-white-outline {
+        background-color:#0000;
+        color:#fff;
+        border-color:#fff;
+    }
+
+    #display-object {
+        /*  min-height:372px; */
+        padding:0px;
+        margin:0px;
+        color:#fff;
+        text-align:center;
+    }
+
+    .page-btn {
+        max-width:45px;
+        padding:6px 10px;
+    }
+
+    .helpers-header h3 { cursor:pointer; }
+
+</style>
+
+<div class="helpers-header costume-header" style="margin-bottom:20px;">
+    <h3>Texturize your outfit:</h3>
+</div>
+
+<div id="costume-helpers" class="tab-content">
+
+        <!-- OUTFIT COSTUME DROPLIST -->
+
+    <div>
+        <h4 style="margin-bottom:30px;">
+            <span style="vertical-align:-0.5rem;">Select outfit item:</span>
+            <div style="display:inline-block;width:50%;float:right;">
+                <select id="outfit-slot-droplist" class="form-control outfit helper slots" readOnly>
+                    <option value="">Select slot:</option>
+                    <option value="body">body</option>
+                    <option value="eyes">eyes</option>
+                    <option value="hairs">hairs</option>
+                    <option value="stockings">stockings</option>
+                    <option value="underwears">underwears</option>
+                    <option value="costume">costume</option>
+                    <option value="tshirt">tshirt</option>
+                    <option value="trousers">trousers</option>
+                    <option value="dress">dress</option>
+                    <option value="shoes">shoes</option>
+                </select>
+            </div>
+        </h4>
+    </div>
+
+        <!-- CATALOGUE - PAGINATOR -->
+
+    <div id="outfits-catalog" class="well">
+
+        <h4>Choose texture:
+            <div id="itmcount" class="pull-right small" style="margin-top:4px;color:#ddd;">
+                <span id="from">zero</span>
+                to <span id="upto">zero</span>
+                of <span id="count">none</span>
+            </div>
+        </h4>
+
+        <div class="pager">
+            <div style="margin:10px 0px 10px;">
+                <li class="btn btn-primary get-prev-btn pull-left">&#9668;</li>
+                <div class="pager-buttons-holder" style="display:inline;">
+                    <a class="btn btn-default page-btn">1</a>
+                    <a class="btn btn-default page-btn">2</a>
+                    <a class="btn btn-default page-btn">3</a>
+                    <a class="btn btn-default page-btn">4</a>
+                </div>
+                <li class="btn btn-primary get-next-btn pull-right">&#9658;</li>
+            </div>
+
+            <div id="display-object" class="panel-container"></div>
+
+            <div style="margin:10px 0px 20px;">
+                <li class="btn btn-primary btn-white-outline first-page-btn pull-left" style="margin-right:5px;">First</li>
+                <li class="btn btn-primary btn-white-outline get-prev-group-btn pull-left">&#9668;&#9668;</li>
+                <li class="btn btn-primary btn-white-outline last-page-btn pull-right" style="margin-left:5px;">Last</li>
+                <li class="btn btn-primary btn-white-outline get-next-group-btn pull-right">&#9658;&#9658;</li>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<hr/>
 
