@@ -414,14 +414,16 @@
 
     var collection = UserDB.collection("materials");
 
-    function count(){
+    async function count(){
         var i = 0; 
         var cursor = collection.find();
-        cursor.forEach(function(){++i;});
+        await cursor.forEach(async function(){++i;});
         return i;
     }
 
-    $("#counter").find("#count").text(count());
+    count().then(function(n){
+        $("#counter").find("#count").text(n);
+    });
 
 
 
