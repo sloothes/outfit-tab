@@ -412,7 +412,7 @@
 
 (function(){
 
-    DB = new zango.Db( "USER" {
+    DB = new zango.Db( "USER", {
     //  textures:   true,
         materials:  true,
     //  animations: true,
@@ -421,8 +421,7 @@
     DB.open(function(err, database){
         if (err) console.error(err);
     }).then( function(){
-        debugMode && console.log( 
-        `Database ${DB.name} (v${DB.version}) opened.`);
+        debugMode && console.log(`Database ${DB.name} (v${DB.version}) opened.`);
     }).catch(function(err){
         console.error(err);
     });
