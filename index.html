@@ -378,3 +378,36 @@
 
 <hr/>
 
+<script>
+
+(function(){
+
+    const helpersHeaderSelector = ".helpers-header";
+    const costumeHeaderSelector = ".costume-header";
+    const costumeHelpersSelector = "#costume-helpers";
+
+    var Signal = signals.Signal;
+    var dblclicked = new Signal();
+
+//  Event handlers.
+    function onDoubleClickEventHandler( element ){
+        if ( $(element).css("display") == "none" ) {
+            $(element).slideDown();
+        } else {
+            $(element).slideUp();
+        }
+    }
+
+//  Event listeners.
+    dblclicked.add(onDoubleClickEventHandler);
+
+//  Dispatch events.
+    $(costumeHeaderSelector).on("dblclick", function(){
+        dblclicked.dispatch( $(costumeHelpersSelector).get(0) );
+    });
+
+})();
+
+</script>
+
+
