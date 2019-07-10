@@ -412,7 +412,22 @@
 
 (function(){
 
-    var collection = UserDB.collection("materials");
+    DB = new zango.Db( "USER" {
+    //  textures:   true,
+        materials:  true,
+    //  animations: true,
+    });
+
+    DB.open(function(err, database){
+        if (err) console.error(err);
+    }).then( function(){
+        debugMode && console.log( 
+        `Database ${DB.name} (v${DB.version}) opened.`);
+    }).catch(function(err){
+        console.error(err);
+    });
+
+    var collection = DB.collection("materials");
 
     async function count(){
         var i = 0; 
