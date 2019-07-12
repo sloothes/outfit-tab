@@ -1,0 +1,241 @@
+<!-- COSTUMIZE OUTFIT -->
+
+<style>
+    #outfits-catalog {
+        max-width:475px;
+        max-height:660px;
+        color:#fff;
+        border:none;
+        padding:0px;
+        background-color:#fff0;
+    }
+    .catalog-item {
+        width:85px;
+        height:85px;
+        margin:4px;
+        background-size: contain;
+        background-position:50% 50%;
+        background-repeat:no-repeat;
+    }
+    .btn-white-outline {
+        background-color:#0000;
+        color:#fff;
+        border-color:#fff;
+    }
+    #display-object {
+        /*  min-height:372px; */
+        padding:0px;
+        margin:0px;
+        color:#fff;
+        text-align:center;
+    }
+    .page-btn {
+        max-width:45px;
+        padding:6px 10px;
+    }
+    .helpers-header h3 { cursor:pointer; }
+</style>
+
+<div class="helpers-header costume-header" style="margin-bottom:20px;">
+    <h3>Costumize your outfit:</h3>
+</div>
+
+<div id="costume-helpers" class="tab-content">
+
+    <div class="helpers-header gender-header">
+        <h4 style="margin-bottom:30px;">
+            <span style="vertical-align:-0.5rem;">Select gender:</span>
+            <div style="display:inline-block;width:50%;float:right;">
+                <select id="outfit-gender-droplist" class="form-control gender droplist" readOnly>
+                    <option value="">Select sex:</option>
+                    <option value="male">male</option>
+                    <option value="female">female</option>
+                </select>
+            </div>
+        </h4>
+    </div>
+
+    <div>
+        <h4 style="margin-bottom:30px;">
+            <span style="vertical-align:-0.5rem;">Select outfit slot:</span>
+            <div style="display:inline-block;width:50%;float:right;">
+                <select id="outfit-slot-droplist" class="form-control outfit helper slots" readOnly>
+                    <option value="">Select slot:</option>
+                    <option value="body">body</option>
+                    <option value="eyes">eyes</option>
+                    <option value="hairs">hairs</option>
+                    <option value="stockings">stockings</option>
+                    <option value="underwears">underwears</option>
+                    <option value="costume">costume</option>
+                    <option value="tshirt">tshirt</option>
+                    <option value="trousers">trousers</option>
+                    <option value="dress">dress</option>
+                    <option value="shoes">shoes</option>
+                </select>
+            </div>
+        </h4>
+    </div>
+
+        <!-- CATALOGUE - PAGINATOR -->
+
+    <div id="outfits-catalog" class="well">
+
+        <h4>Choose material:
+            <div id="counter" class="pull-right small" style="margin-top:4px;color:#ddd;">
+                <span id="from">zero</span>
+                to <span id="upto">zero</span>
+                of <span id="count">none</span>
+            </div>
+        </h4>
+
+        <div class="pager">
+            <div style="margin:10px 0px 10px;">
+                <li class="btn btn-primary get-prev-btn pull-left">&#9668;</li>
+                <div class="pager-buttons-holder" style="display:inline;">
+                    <a class="btn btn-default page-btn">1</a>
+                    <a class="btn btn-default page-btn">2</a>
+                    <a class="btn btn-default page-btn">3</a>
+                    <a class="btn btn-default page-btn">4</a>
+                </div>
+                <li class="btn btn-primary get-next-btn pull-right">&#9658;</li>
+            </div>
+
+            <div id="display-object" class="panel-container"></div>
+
+            <div style="margin:10px 0px 20px;">
+                <li class="btn btn-primary btn-white-outline first-page-btn pull-left" style="margin-right:5px;">First</li>
+                <li class="btn btn-primary btn-white-outline get-prev-group-btn pull-left">&#9668;&#9668;</li>
+                <li class="btn btn-primary btn-white-outline last-page-btn pull-right" style="margin-left:5px;">Last</li>
+                <li class="btn btn-primary btn-white-outline get-next-group-btn pull-right">&#9658;&#9658;</li>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<hr/>
+
+<script>
+(function(){
+    const helpersHeaderSelector = ".helpers-header";
+    const costumeHeaderSelector = ".costume-header";
+    const costumeHelpersSelector = "#costume-helpers";
+    var Signal = signals.Signal;
+    var dblclicked = new Signal();
+//  Event handlers.
+    function onDoubleClickEventHandler( element ){
+        if ( $(element).css("display") == "none" ) {
+            $(element).slideDown();
+        } else {
+            $(element).slideUp();
+        }
+    }
+//  Event listeners.
+    dblclicked.add(onDoubleClickEventHandler);
+//  Dispatch events.
+    $(costumeHeaderSelector).on("dblclick", function(){
+        dblclicked.dispatch( $(costumeHelpersSelector).get(0) );
+    });
+})();
+</script>
+
+<script>
+(function(){
+    var skip = 0;
+    const limit = 9;
+    const viewer = document.getElementById("viewer");
+    const displayObject = document.getElementById("display-object");
+    const slotDroplist = document.getElementById("outfit-slot-droplist");
+    const genderDroplist = document.getElementById("outfit-gender-droplist");
+    var Signal = signals.Signal;
+    var genderChanged = new Signal();
+    var outfitSlotChanged = new Signal();
+    var materialButttonClicked = new Signal();
+    genderChanged.add(function(value){
+        if ( !value ) return;
+        var data = "/gender/" + value;
+        if ( window.socket ) {
+            socket.publish(localPlayerChannel, data);
+        } else {
+            viewer.contentWindow.localPlayerHandler(data);
+        }
+        store( "Sex", data );
+    });
+    outfitSlotChanged.add(function(value){
+        var data = "/select/" + value;
+        if ( window.socket ) {
+            socket.publish(localPlayerChannel, data);
+        } else {
+            viewer.contentWindow.localPlayerHandler(data);
+        }
+    });
+    materialButttonClicked.add(function(json){
+        if ( !$(slotDroplist).val() ) return;
+        if ( !$(genderDroplist).val() ) return;
+        var data = {
+            slot: $(slotDroplist).val(),
+            gender: $(genderDroplist).val(),
+            material: json,
+        };
+        if ( window.socket ) {
+            socket.publish(MaterialChannel, data); // demo!
+        } else {
+            viewer.contentWindow.localPlayerApplyMaterial(data);
+        }
+    });
+    $(genderDroplist).on("change", function(){
+        if ( !this.value ) return;
+        genderChanged.dispatch( this.value );
+    });
+    $(slotDroplist).on("change", function(){
+        outfitSlotChanged.dispatch(this.value);
+    });
+//  demo.
+    var DB = new zango.Db( "USER", {
+        materials:  true,
+    });
+    DB.open(function(err, database){
+        if (err) console.error(err);
+    }).then( function(){
+        debugMode && console.log(`Database ${DB.name} (v${DB.version}) opened.`);
+    }).catch(function(err){
+        console.error(err);
+    });
+    var collection = DB.collection("materials");
+    async function count(){
+        var i = 0; 
+        var cursor = collection.find();
+        await cursor.forEach(async function(){++i;});
+        return i;
+    }
+    count().then(function(n){
+        $("#counter").find("#count").text(n);
+    });
+    $(slotDroplist).on("change", function(){
+        $(displayObject).children().remove();
+        if ( !this.value ) return;
+        var cursor = collection.find().limit(limit);
+        cursor.forEach(function(json){
+            var element = document.createElement("div");
+            element.id = json._id;  element.title = json.name;
+            element.classList.add("btn", "btn-default", "btn-white-outline", "catalog-item", "material-item");
+        //  $(`<div class="btn btn-default btn-white-outline catalog-item texture-item"></div>`).get(0);
+            if ( json.meta && json.meta.thumbnail ) {
+                element.style.backgroundImage = `url(${json.meta.thumbnail})`;
+            } else {
+                element.style.backgroundImage = `url(/img/no-image-avaliable-200x200.png)`;
+            }
+            $(element).on("click", function(){
+                clearTimeout(this.timeout);
+                this.timeout = setTimeout( function(){
+                    materialButttonClicked.dispatch(json);
+                }, 250 );
+            });
+            $(displayObject).append( element );
+        });
+    });
+})();
+
+
+</script>
