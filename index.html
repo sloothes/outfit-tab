@@ -340,7 +340,7 @@
 
     <div id="outfits-catalog" class="well">
 
-        <h4>Choose texture:
+        <h4>Choose material:
             <div id="counter" class="pull-right small" style="margin-top:4px;color:#ddd;">
                 <span id="from">zero</span>
                 to <span id="upto">zero</span>
@@ -446,9 +446,9 @@
 
         }
 
-
-
     });
+
+//  demo.
 
     var DB = new zango.Db( "USER", {
         materials:  true,
@@ -478,25 +478,27 @@
     $(slotDroplist).on("change", function(){
         $(displayObject).children().remove();
 
+        if ( !this.value ) return;
+
         var cursor = collection.find().limit(limit);
-        cursor.forEach(function(doc){
+        cursor.forEach(function(json){
 
             var element = document.createElement("div");
-            element.id = doc._id;  element.title = doc.name;
+            element.id = json._id;  element.title = json.name;
             element.classList.add("btn", "btn-default", "btn-white-outline", "catalog-item", "material-item");
 
         //  $(`<div class="btn btn-default btn-white-outline catalog-item texture-item"></div>`).get(0);
 
-            if ( doc.thumbnail ) {
-                element.style["background-image"] = `url(${doc.thumbnail})`;
+            if ( json.meta.thumbnail ) {
+                element.style.backgroundImage = `url(${json.meta.thumbnail})`;
             } else {
-                element.style["background-image"] = `url(/img/no-image-avaliable-200x200.png)`;
+                element.style.backgroundImage = `url(/img/no-image-avaliable-200x200.png)`;
             }
 
             $(element).on("click", function(){
                 clearTimeout(this.timeout);
                 this.timeout = setTimeout( function(){
-                    materialButttonClicked.dispatch(doc);
+                    materialButttonClicked.dispatch(json);
                 }, 250 );
             });
 
