@@ -489,7 +489,7 @@
 
         //  $(`<div class="btn btn-default btn-white-outline catalog-item texture-item"></div>`).get(0);
 
-            if ( json.meta.thumbnail ) {
+            if ( json.meta && json.meta.thumbnail ) {
                 element.style.backgroundImage = `url(${json.meta.thumbnail})`;
             } else {
                 element.style.backgroundImage = `url(/img/no-image-avaliable-200x200.png)`;
