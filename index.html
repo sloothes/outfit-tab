@@ -315,6 +315,19 @@
 
 <div id="costume-helpers" class="tab-content">
 
+    <div class="helpers-header gender-header">
+        <h4 style="margin-bottom:30px;">
+            <span style="vertical-align:-0.5rem;">Select gender:</span>
+            <div style="display:inline-block;width:50%;float:right;">
+                <select id="outfit-gender-droplist" class="form-control gender droplist" readOnly>
+                    <option value="">Select sex:</option>
+                    <option value="male">male</option>
+                    <option value="female">female</option>
+                </select>
+            </div>
+        </h4>
+    </div>
+
     <div>
         <h4 style="margin-bottom:30px;">
             <span style="vertical-align:-0.5rem;">Select outfit slot:</span>
@@ -417,7 +430,7 @@
 
     const viewer = document.getElementById("viewer");
     const displayObject = document.getElementById("display-object");
-    const genderDroplist = document.getElementById("gender-droplist");
+    const genderDroplist = document.getElementById("outfit-gender-droplist");
     const slotDroplist = document.getElementById("outfit-slot-droplist");
 
     var Signal = signals.Signal;
