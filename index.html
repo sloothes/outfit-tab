@@ -412,10 +412,46 @@
 
 (function(){
 
-    DB = new zango.Db( "USER", {
-    //  textures:   true,
+    var skip = 0;
+    const limit = 9;
+
+    const viewer = document.getElementById("viewer");
+    const displayObject = document.getElementById("display-object");
+    const genderDroplist = document.getElementById("gender-droplist");
+    const slotDroplist = document.getElementById("outfit-slot-droplist");
+
+    var Signal = signals.Signal;
+    var materialButttonClicked = new Signal();
+
+    materialButttonClicked.add(function(json){
+
+        if ( !$(slotDroplist).val() ) return;
+        if ( !$(genderDroplist).val() ) return;
+
+        var data = {
+            slot: $(slotDroplist).val(),
+            gender: $(genderDroplist).val(),
+            material: json,
+        };
+
+        if ( window.socket ) {
+
+            socket.publish(MaterialChannel, data, function(err){
+                if (err) console.error(err);
+            });
+
+        } else {
+
+            viewer.contentWindow.localPlayerApplyMaterial(data);
+
+        }
+
+
+
+    });
+
+    var DB = new zango.Db( "USER", {
         materials:  true,
-    //  animations: true,
     });
 
     DB.open(function(err, database){
@@ -439,7 +475,34 @@
         $("#counter").find("#count").text(n);
     });
 
+    $(slotDroplist).on("change", function(){
+        $(displayObject).children().remove();
 
+        var cursor = collection.find().limit(limit);
+        cursor.forEach(function(doc){
+
+            var element = document.createElement("div");
+            element.id = doc._id;  element.title = doc.name;
+            element.classList.add("btn", "btn-default", "btn-white-outline", "catalog-item", "material-item");
+
+        //  $(`<div class="btn btn-default btn-white-outline catalog-item texture-item"></div>`).get(0);
+
+            if ( doc.thumbnail ) {
+                element.style["background-image"] = `url(${doc.thumbnail})`;
+            } else {
+                element.style["background-image"] = `url(/img/no-image-avaliable-200x200.png)`;
+            }
+
+            $(element).on("click", function(){
+                clearTimeout(this.timeout);
+                this.timeout = setTimeout( function(){
+                    materialButttonClicked.dispatch(doc);
+                }, 250 );
+            });
+
+            $(displayObject).append( element );
+        });
+    });
 
 
 
