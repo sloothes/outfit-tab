@@ -430,11 +430,33 @@
 
     const viewer = document.getElementById("viewer");
     const displayObject = document.getElementById("display-object");
-    const genderDroplist = document.getElementById("outfit-gender-droplist");
     const slotDroplist = document.getElementById("outfit-slot-droplist");
+    const genderDroplist = document.getElementById("outfit-gender-droplist");
 
     var Signal = signals.Signal;
+    var genderChanged = new Signal();
+    var outfitSlotChanged = new Signal();
     var materialButttonClicked = new Signal();
+
+    genderChanged.add(function(value){
+        if ( !value ) return;
+        var data = "/gender/" + value;
+        if ( window.socket ) {
+            socket.publish(localPlayerChannel, data);
+        } else {
+            viewer.contentWindow.localPlayerHandler(data);
+        }
+        store( "Sex", data );
+    });
+
+    outfitSlotChanged.add(function(value){
+        var data = "/select/" + value;
+        if ( window.socket ) {
+            socket.publish(localPlayerChannel, data);
+        } else {
+            viewer.contentWindow.localPlayerHandler(data);
+        }
+    });
 
     materialButttonClicked.add(function(json){
 
@@ -449,9 +471,7 @@
 
         if ( window.socket ) {
 
-            socket.publish(MaterialChannel, data, function(err){
-                if (err) console.error(err);
-            });
+            socket.publish(MaterialChannel, data); // demo!
 
         } else {
 
@@ -460,6 +480,16 @@
         }
 
     });
+
+    $(genderDroplist).on("change", function(){
+        if ( !this.value ) return;
+        genderChanged.dispatch( this.value );
+    });
+
+    $(slotDroplist).on("change", function(){
+        outfitSlotChanged.dispatch(this.value);
+    });
+
 
 //  demo.
 
