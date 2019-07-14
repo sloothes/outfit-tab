@@ -39,8 +39,8 @@
         <div style="display:inline-block;width:50%;float:right;">
             <select id="gender-droplist" class="form-control gender droplist" readOnly>
                 <option value="">Select sex:</option>
-                <option value="/gender/male">male</option>
-                <option value="/gender/female">female</option>
+                <option value="male">male</option>
+                <option value="female">female</option>
             </select>
         </div>
     </h4>
@@ -60,8 +60,9 @@
     var Signal = signals.Signal;
     var genderChanged = new Signal();
 
-    genderChanged.add(function(data){
+    genderChanged.add(function(value){
 
+        var data = "/gender/" + value;  // important!
         $(outfitHelpersTabSelector).removeClass("in active");
 
         if ( window.socket ) {
@@ -94,7 +95,7 @@
 
     $(droplist).on("change", function(){
         genderChanged.dispatch( this.value );
-        if (this.value) store( "Sex", this.value );
+        if (this.value) store( "Sex", "/gender/" + this.value );
     });
 
 })();
@@ -310,7 +311,7 @@
     <h3>Costumize outfit:</h3>
 </div>
 
-<div id="display-materials" class="tab-content">
+<div id="material-chooser" class="tab-content">
 
     <div>
         <h4 style="margin-bottom:30px;">
@@ -355,7 +356,7 @@
                 <li class="btn btn-primary get-next-btn pull-right">&#9658;</li>
             </div>
 
-            <div id="display-documents" class="well"></div>
+            <div id="documents-display" class="well"></div>
 
             <div style="margin:10px 0px 10px;height:35px;">
                 <li class="btn btn-primary btn-white-outline first-page-btn pull-left" style="margin-right:5px;">First</li>
@@ -377,7 +378,7 @@
 
     const helpersHeaderSelector = ".helpers-header";
     const materialHeaderSelector = ".material-header";
-    const displayMaterials = $("#display-materials").get(0);
+    const materialChooser = $("#material-chooser").get(0);
 
     var Signal = signals.Signal;
     var dblclicked = new Signal();
@@ -396,10 +397,221 @@
 
 //  Dispatch events.
     $(materialHeaderSelector).on("dblclick", function(){
-        dblclicked.dispatch( displayMaterials );
+        dblclicked.dispatch( materialChooser );
     });
 
 })();
+
+</script>
+
+<script>
+
+(function(){
+
+    var interval;
+
+//  Pager.
+
+    var max = 0;
+    var skip = 0;
+    var lastpage = 0;
+    var currentpage = 1;
+    var currentindex = 0;
+
+    const limit = 5;
+    const pageslength = $("#material-items").find(".page-btn").length;
+
+    function resetPager(){
+        max = 0;
+        skip = 0;
+        lastpage = 0;
+        currentpage = 1;
+        currentindex = 0;
+    }
+
+//  Collection.
+
+    const DB = new zango.Db( "USER", {
+        materials:  true,
+    });
+
+    DB.open(function(err, database){
+        if (err) console.error(err);
+    }).then( function(){
+        debugMode && console.log(`${DB.name} (v${DB.version}) opened.`);
+    }).catch(function(err){
+        console.error(err);
+    });
+
+    const collection = DB.collection("materials");
+    debugMode && console.log({"collection":collection});
+
+
+    const viewer = document.getElementById("viewer");
+    const materialPager = document.getElementById("material-pager");
+    const genderDroplist = document.getElementById("gender-droplist");
+    const materialChooser = document.getElementById("material-chooser");
+    const materialCounter = $("#material-items").find("#counter").get(0);
+    const slotDroplist = $(materialChooser).find("#outfit-slot-droplist").get(0);
+    const displayObjects = $(materialChooser).find("#documents-display").get(0);
+
+
+//  Signals.
+
+    var Signal = signals.Signal;
+    var droplistChanged = new Signal();
+    var materialSelected = new Signal();
+
+    materialSelected.add(function(json){
+
+        var data = {
+            material: json,
+            slot: json.meta.slot,
+            gender: json.meta.gender,
+        };
+
+        if ( window.socket ) {
+            socket.publish(localPlayerMaterialChannel, data); // under constuction!
+        } else {
+            viewer.contentWindow.localPlayerApplyMaterial(data);
+        }
+
+    });
+
+    droplistChanged.add(async function(){
+
+        var selectors = { 
+            "meta.slot": slotDroplist.value,
+            "meta.gender": genderDroplist.value,
+        };
+
+    //  count.
+
+        var k = skip; 
+        await collection.find(selectors)
+        .skip(skip).forEach(async function(){
+            ++k;
+        });
+
+        max = k; 
+        lastpage = parseInt(max / limit);
+        currentpage = parseInt( skip / limit ) + 1;
+        currentindex = parseInt( skip / limit ) % pageslength;
+
+        $(materialCounter).find("#count").text(max);
+
+        if ( max == 0 ) {  // => (skip = 0) 
+            $(materialCounter).find("#from").text("0"); 
+        } else {
+            $(materialCounter).find("#from").text(skip + 1);
+        }
+
+        if ( skip + limit > max ) {
+            $(materialCounter).find("#upto").text( max );
+        } else {
+            $(materialCounter).find("#upto").text(skip + limit);
+        }
+
+        debugMode && console.log({"max":max, "skip":skip});
+
+    });
+
+    droplistChanged.add(function(){
+
+        var selectors = { 
+            "meta.slot": slotDroplist.value,
+            "meta.gender": genderDroplist.value,
+        };
+
+        clearTimeout(interval);
+        interval = setTimeout(function(){
+
+            collection.find(selectors).skip(skip)
+            .limit(limit).toArray(function(err){
+                if (err) throw err;
+            }).then(function(docs){
+
+                $(displayObjects).children().remove();
+                debugMode && console.log({"docs":docs});
+
+                docs.forEach(function(json){
+
+                    var element = document.createElement("div");
+                    element.innerText = element.title = json.name;
+                    element.id = json._id; element.classList.add("material-item");
+
+                    $(element).on("click", function(){
+                        $(".material-item").removeClass("selected");
+                        $(element).addClass("selected");
+                        clearTimeout(this.interval);
+                        element.interval = setTimeout( function(){
+                            materialSelected.dispatch(json);
+                        }, 250 );
+                    });
+
+                    $(displayObjects).append( element );
+
+                });
+
+            }).catch(function(err){
+                console.error(err);
+            });
+
+        }, 250 );
+
+    });
+
+//  Event listeners.
+
+    $(slotDroplist).on("change", function(){
+        resetPager();
+        droplistChanged.dispatch();
+    });
+
+    $(genderDroplist).on("change", function(){
+        resetPager();
+        droplistChanged.dispatch();
+    });
+
+    //  Pager Controls.
+
+    $(materialPager).find(".first-page-btn").on("click", function(){
+        skip = 0;
+        droplistChanged.dispatch();
+    });
+
+    $(materialPager).find(".last-page-btn").on("click", function(){
+        lastpage = parseInt(max / limit);
+        skip = limit * lastpage;
+        droplistChanged.dispatch();
+    });
+
+    $(materialPager).find(".get-prev-btn").on("click", function(){
+
+        if ( skip - limit < 0 ) 
+            skip = 0;
+        else 
+            skip -= limit;
+
+        droplistChanged.dispatch();
+    });
+
+    $(materialPager).find(".get-next-btn").on("click", function(){
+
+        if ( skip + limit > max )
+            skip = limit * parseInt(max / limit);  // limit * lastpage;
+        else
+            skip += limit;
+
+        droplistChanged.dispatch();
+    });
+
+
+
+
+
+
+});
 
 </script>
 
@@ -408,5 +620,7 @@
 
 
 
+})();
 
+</script>
 
