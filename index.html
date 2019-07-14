@@ -499,9 +499,16 @@
         currentpage = parseInt( skip / limit ) + 1;
         currentindex = parseInt( skip / limit ) % pageslength;
 
-        $(materialPager).find(".page-btn").removeClass("btn-primary");
-        var currentButton = $(materialPager).find(".page-btn")[ currentindex ];
+        var $pagebuttons = $(materialPager).find(".page-btn");
+
+        $pagebuttons.removeClass("btn-primary");
+        var currentButton = $pagebuttons.get( currentindex );
         $(currentButton).addClass("btn-primary");
+
+        var num = parseInt( currentpage / pageslength );
+        $pagebuttons.toArray().forEach(function(button){
+            $(button).text(++num);
+        });
 
         $(materialCounter).find("#count").text(max);
 
