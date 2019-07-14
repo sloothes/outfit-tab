@@ -503,7 +503,8 @@
 
         var num = parseInt( currentpage / pageslength );
         pagebuttons.each(function(i){
-            $(pagebuttons[i]).text(++num);
+            var p = num * pageslength;
+            $(pagebuttons[i]).text( p + i);
         });
 
         pagebuttons.removeClass("btn-primary");
