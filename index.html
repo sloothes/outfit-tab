@@ -496,19 +496,19 @@
 
         max = k; 
         lastpage = parseInt(max / limit);
-        currentpage = parseInt( skip / limit ) + 1;
+        currentpage = parseInt( skip / limit ); // + 1;
         currentindex = parseInt( skip / limit ) % pageslength;
 
-        var $pagebuttons = $(materialPager).find(".page-btn");
-
-        $pagebuttons.removeClass("btn-primary");
-        var currentButton = $pagebuttons.get( currentindex );
-        $(currentButton).addClass("btn-primary");
+        var pagebuttons = $(materialPager).find(".page-btn");
 
         var num = parseInt( currentpage / pageslength );
-        $pagebuttons.toArray().forEach(function(button){
-            $(button).text(++num);
+        pagebuttons.each(function(i){
+            $(pagebuttons[i]).text(++num);
         });
+
+        pagebuttons.removeClass("btn-primary");
+        var currentButton = pagebuttons.get( currentindex );
+        $(currentButton).addClass("btn-primary");
 
         $(materialCounter).find("#count").text(max);
 
