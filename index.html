@@ -499,6 +499,10 @@
         currentpage = parseInt( skip / limit ) + 1;
         currentindex = parseInt( skip / limit ) % pageslength;
 
+        $(materialPager).find(".page-btn").removeClass("btn-primary");
+        var currentButton = $(materialPager).find(".page-btn")[ currentindex ];
+        $(currentButton).addClass("btn-primary");
+
         $(materialCounter).find("#count").text(max);
 
         if ( max == 0 ) {  // => (skip = 0) 
@@ -589,33 +593,37 @@
 
     $(materialPager).find(".get-prev-btn").on("click", function(){
 
-        if ( skip - limit < 0 ) 
+        if ( skip - limit < 0 ) {
             skip = 0;
-        else 
+            currentindex = 0;
+        } else {
             skip -= limit;
+        }
 
         droplistChanged.dispatch();
     });
 
     $(materialPager).find(".get-next-btn").on("click", function(){
 
-        if ( skip + limit > max )
+        if ( skip + limit > max ) {
             skip = limit * parseInt(max / limit);  // limit * lastpage;
-        else
+        } else {
             skip += limit;
+        }
 
         droplistChanged.dispatch();
     });
 
 
+    $(materialPager).find(".get-next-group-btn").on("click", function(){
 
 
+    });
+
+    $(materialPager).find(".get-prev-group-btn").on("click", function(){
 
 
-
-
-
-
+    });
 
 
 })();
