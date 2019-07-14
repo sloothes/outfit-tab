@@ -494,14 +494,16 @@
             ++k;
         });
 
+    //  pager.
+
         max = k; 
         lastpage = parseInt(max / limit);
-        currentpage = parseInt( skip / limit ) + 1;
+        currentpage = parseInt( skip / limit );
         currentindex = parseInt( skip / limit ) % pageslength;
 
         var pagebuttons = $(materialPager).find(".page-btn");
 
-        var num = parseInt( currentpage / pageslength );
+        var num = parseInt( currentpage / pageslength ) + 1; // important!
         pagebuttons.each(function(i){
             var p = num * pageslength;
             $(pagebuttons[i]).text( p + i);
