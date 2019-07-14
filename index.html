@@ -496,7 +496,7 @@
 
         max = k; 
         lastpage = parseInt(max / limit);
-        currentpage = parseInt( skip / limit ); // + 1;
+        currentpage = parseInt( skip / limit ) + 1;
         currentindex = parseInt( skip / limit ) % pageslength;
 
         var pagebuttons = $(materialPager).find(".page-btn");
