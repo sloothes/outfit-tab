@@ -416,7 +416,7 @@
     var outfitSlotChanged = new Signal();
 
     outfitSlotChanged.add(function(value){
-        var data = "/select/" + value;
+        var data = "/outfit/" + value;
         viewer.contentWindow.localPlayerHandler(data);
     });
 
