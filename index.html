@@ -462,7 +462,7 @@
     DB.open(function(err, database){
         if (err) console.error(err);
     }).then( function(){
-        debugMode && console.log(`${DB.name} (v${DB.version}) opened.`);
+        debugMode && console.log(`Database ${DB.name} (v${DB.version}) opened.`);
     }).catch(function(err){
         console.error(err);
     });
