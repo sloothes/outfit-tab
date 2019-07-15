@@ -318,7 +318,7 @@
         <h4 style="margin-bottom:30px;">
             <span style="vertical-align:-0.5rem;">Select outfit slot:</span>
             <div style="display:inline-block;width:50%;float:right;">
-                <select id="outfit-slot-droplist" class="form-control outfit helper slots" readOnly>
+                <select id="outfit-slot-droplist" class="form-control" readOnly>
                     <option value="">Select slot:</option>
                     <option value="body">body</option>
                     <option value="eyes">eyes</option>
@@ -399,6 +399,29 @@
 //  Dispatch events.
     $(materialHeaderSelector).on("dblclick", function(){
         dblclicked.dispatch( materialChooser );
+    });
+
+})();
+
+</script>
+
+<script>
+
+(function(){
+
+    const viewer = document.getElementById("viewer");
+    const slotDroplist = $("#material-chooser").find("select#outfit-slot-droplist").get(0);
+
+    var Signal = signals.Signal;
+    var outfitSlotChanged = new Signal();
+
+    outfitSlotChanged.add(function(value){
+        var data = "/select/" + value;
+        viewer.contentWindow.localPlayerHandler(data);
+    });
+
+    $(slotDroplist).on("change", function(){
+        outfitSlotChanged.dispatch(this.value);
     });
 
 })();
