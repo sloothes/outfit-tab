@@ -511,49 +511,49 @@
 
     //  count.
 
-        var k;
         (async function(){
-            k = skip;
+            var k = skip;
             await collection.find(selectors)
             .skip(skip).forEach(function(){
                 ++k;
             });
+
+            debugMode && console.log("k:", k);
+
+        //  pager.
+
+            max = k; 
+            lastpage = parseInt( max / limit );
+            currentpage = parseInt( skip / limit );
+            currentindex = parseInt( currentpage % pageslength );
+
+            var pagebuttons = $(materialPager).find(".page-btn");
+
+            var num = parseInt( currentpage / pageslength );
+            pagebuttons.each(function(i){
+                var p = (num * pageslength) + 1; // important!
+                $(pagebuttons[i]).text( p + i );
+            });
+
+            pagebuttons.removeClass("btn-primary");
+            var currentButton = pagebuttons.get( currentindex );
+            $(currentButton).addClass("btn-primary");
+
+            $(materialCounter).find("#count").text(max);
+
+            if ( max == 0 ) {  // => (skip = 0) 
+                $(materialCounter).find("#from").text("0"); 
+            } else {
+                $(materialCounter).find("#from").text(skip + 1);
+            }
+
+            if ( skip + limit > max ) {
+                $(materialCounter).find("#upto").text( max );
+            } else {
+                $(materialCounter).find("#upto").text(skip + limit);
+            }
+
         })();
-
-        debugMode && console.log("k:", k);
-
-    //  pager.
-
-        max = k; 
-        lastpage = parseInt( max / limit );
-        currentpage = parseInt( skip / limit );
-        currentindex = parseInt( currentpage % pageslength );
-
-        var pagebuttons = $(materialPager).find(".page-btn");
-
-        var num = parseInt( currentpage / pageslength );
-        pagebuttons.each(function(i){
-            var p = (num * pageslength) + 1; // important!
-            $(pagebuttons[i]).text( p + i );
-        });
-
-        pagebuttons.removeClass("btn-primary");
-        var currentButton = pagebuttons.get( currentindex );
-        $(currentButton).addClass("btn-primary");
-
-        $(materialCounter).find("#count").text(max);
-
-        if ( max == 0 ) {  // => (skip = 0) 
-            $(materialCounter).find("#from").text("0"); 
-        } else {
-            $(materialCounter).find("#from").text(skip + 1);
-        }
-
-        if ( skip + limit > max ) {
-            $(materialCounter).find("#upto").text( max );
-        } else {
-            $(materialCounter).find("#upto").text(skip + limit);
-        }
 
         debugMode && console.log({"max":max, "skip":skip});
 
