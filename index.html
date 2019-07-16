@@ -502,7 +502,7 @@
 
     });
 
-    droplistChanged.add(async function(){
+    droplistChanged.add(function(){
 
         var selectors = { 
             "meta.slot": slotDroplist.value,
@@ -512,10 +512,12 @@
     //  count.
 
         var k = skip;
-        await collection.find(selectors)
-        .skip(skip).forEach(function(){
-            ++k;
-        });
+        (async function(){
+            await collection.find(selectors)
+            .skip(skip).forEach(function(){
+                ++k;
+            });
+        })();
 
         debugMode && console.log("k:", k);
 
