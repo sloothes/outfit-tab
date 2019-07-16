@@ -638,7 +638,7 @@
 
     $(materialPager).find(".get-next-btn").on("click", function(){
 
-        if ( skip + limit > max ) {
+        if ( skip + limit > max - 1 ) {
             skip = limit * parseInt(max / limit);  // limit * lastpage;
         } else {
             skip += limit;
