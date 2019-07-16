@@ -526,12 +526,7 @@
             lastpage = parseInt( max / limit );
             currentpage = parseInt( skip / limit );
 
-            if ( skip < max ){
-                currentindex = parseInt( currentpage % pageslength );
-            } else {
-                currentindex = parseInt( currentpage % pageslength ) - 1; // danger!
-            }
-
+            currentindex = parseInt( currentpage % pageslength );
             debugMode && console.log("currentindex:", currentindex);
 
             var pagebuttons = $(materialPager).find(".page-btn");
@@ -563,6 +558,8 @@
             }
 
             debugMode && console.log({"max":max, "skip":skip});
+
+        })().then(function(){
 
             clearTimeout(interval);
             interval = setTimeout(function(){
@@ -600,7 +597,7 @@
 
             }, 250 );
 
-        })();
+        });
 
     });
 
