@@ -529,15 +529,17 @@
 
             var pagebuttons = $(materialPager).find(".page-btn");
 
-            var num = parseInt( currentpage / pageslength );
-            pagebuttons.each(function(i){
-                var p = (num * pageslength) + 1; // important!
-                $(pagebuttons[i]).text( p + i );
-            });
+            if ( skip < max ) {
+                var num = parseInt( currentpage / pageslength );
+                pagebuttons.each(function(i){
+                    var p = (num * pageslength) + 1; // important!
+                    $(pagebuttons[i]).text( p + i );
+                });
 
-            pagebuttons.removeClass("btn-primary");
-            var currentButton = pagebuttons.get( currentindex );
-            $(currentButton).addClass("btn-primary");
+                pagebuttons.removeClass("btn-primary");
+                var currentButton = pagebuttons.get( currentindex );
+                $(currentButton).addClass("btn-primary");
+            }
 
             $(materialCounter).find("#count").text(max);
 
@@ -553,9 +555,10 @@
                 $(materialCounter).find("#upto").text(skip + limit);
             }
 
+            debugMode && console.log({"max":max, "skip":skip});
+
         })();
 
-        debugMode && console.log({"max":max, "skip":skip});
 
         clearTimeout(interval);
         interval = setTimeout(function(){
