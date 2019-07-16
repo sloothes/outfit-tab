@@ -513,16 +513,18 @@
 
         var k = skip; 
         await collection.find(selectors)
-        .skip(skip).forEach(async function(){
+        .skip(skip).forEach(function(){
             ++k;
         });
 
     //  pager.
 
         max = k; 
-        lastpage = parseInt(max / limit);
+        debugMode && console.log( "max:", max );
+
+        lastpage = parseInt( max / limit );
         currentpage = parseInt( skip / limit );
-        currentindex = parseInt( skip / limit ) % pageslength;
+        currentindex = parseInt( currentpage % pageslength );
 
         var pagebuttons = $(materialPager).find(".page-btn");
 
@@ -638,7 +640,7 @@
 
     $(materialPager).find(".get-next-btn").on("click", function(){
 
-        if ( skip + limit > max - 1 ) {
+        if ( skip + limit > max ) {
             skip = limit * parseInt(max / limit);  // limit * lastpage;
         } else {
             skip += limit;
