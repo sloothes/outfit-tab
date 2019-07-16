@@ -511,8 +511,9 @@
 
     //  count.
 
-        var k = skip;
+        var k;
         (async function(){
+            k = skip;
             await collection.find(selectors)
             .skip(skip).forEach(function(){
                 ++k;
