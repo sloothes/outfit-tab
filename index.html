@@ -512,6 +512,7 @@
     //  count.
 
         (async function(){
+
             var k = skip;
             await collection.find(selectors)
             .skip(skip).forEach(function(){
@@ -529,22 +530,22 @@
 
             var pagebuttons = $(materialPager).find(".page-btn");
 
-            if ( skip < max ) {
-                var num = parseInt( currentpage / pageslength );
-                pagebuttons.each(function(i){
-                    var p = (num * pageslength) + 1; // important!
-                    $(pagebuttons[i]).text( p + i );
-                });
+            var num = parseInt( currentpage / pageslength );
+            pagebuttons.each(function(i){
+                var p = (num * pageslength) + 1; // important!
+                $(pagebuttons[i]).text( p + i );
+            });
 
-                pagebuttons.removeClass("btn-primary");
-                var currentButton = pagebuttons.get( currentindex );
-                $(currentButton).addClass("btn-primary");
-            }
+            pagebuttons.removeClass("btn-primary");
+            var currentButton = pagebuttons.get( currentindex );
+            $(currentButton).addClass("btn-primary");
 
             $(materialCounter).find("#count").text(max);
 
             if ( max == 0 ) {  // => (skip = 0) 
                 $(materialCounter).find("#from").text("0"); 
+            } else if ( skip == max ) {
+                $(materialCounter).find("#from").text(skip);
             } else {
                 $(materialCounter).find("#from").text(skip + 1);
             }
