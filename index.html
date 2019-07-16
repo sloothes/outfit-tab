@@ -511,55 +511,51 @@
 
     //  count.
 
-        (async function(){
+        var k = skip;
+        collection.find(selectors)
+        .skip(skip).forEach(function(){
+            ++k;
+        });
 
-            var k = skip;
-            await collection.find(selectors)
-            .skip(skip).forEach(function(){
-                ++k;
-            });
+        debugMode && console.log("k:", k);
 
-            debugMode && console.log("k:", k);
+    //  pager.
 
-        //  pager.
+        max = k; 
+        lastpage = parseInt( max / limit );
+        currentpage = parseInt( skip / limit );
+        currentindex = parseInt( currentpage % pageslength );
+        debugMode && console.log("currentindex:", currentindex);
 
-            max = k; 
-            lastpage = parseInt( max / limit );
-            currentpage = parseInt( skip / limit );
-            currentindex = parseInt( currentpage % pageslength );
+        var pagebuttons = $(materialPager).find(".page-btn");
 
-            var pagebuttons = $(materialPager).find(".page-btn");
+        var num = parseInt( currentpage / pageslength );
+        pagebuttons.each(function(i){
+            var p = (num * pageslength) + 1; // important!
+            $(pagebuttons[i]).text( p + i );
+        });
 
-            var num = parseInt( currentpage / pageslength );
-            pagebuttons.each(function(i){
-                var p = (num * pageslength) + 1; // important!
-                $(pagebuttons[i]).text( p + i );
-            });
+        pagebuttons.removeClass("btn-primary");
+        var currentButton = pagebuttons.get( currentindex );
+        $(currentButton).addClass("btn-primary");
 
-            pagebuttons.removeClass("btn-primary");
-            var currentButton = pagebuttons.get( currentindex );
-            $(currentButton).addClass("btn-primary");
+        $(materialCounter).find("#count").text(max);
 
-            $(materialCounter).find("#count").text(max);
+        if ( max == 0 ) {  // => (skip = 0) 
+            $(materialCounter).find("#from").text("0"); 
+        } else if ( skip == max ) {
+            $(materialCounter).find("#from").text(skip);
+        } else {
+            $(materialCounter).find("#from").text(skip + 1);
+        }
 
-            if ( max == 0 ) {  // => (skip = 0) 
-                $(materialCounter).find("#from").text("0"); 
-            } else if ( skip == max ) {
-                $(materialCounter).find("#from").text(skip);
-            } else {
-                $(materialCounter).find("#from").text(skip + 1);
-            }
+        if ( skip + limit > max ) {
+            $(materialCounter).find("#upto").text( max );
+        } else {
+            $(materialCounter).find("#upto").text(skip + limit);
+        }
 
-            if ( skip + limit > max ) {
-                $(materialCounter).find("#upto").text( max );
-            } else {
-                $(materialCounter).find("#upto").text(skip + limit);
-            }
-
-            debugMode && console.log({"max":max, "skip":skip});
-
-        })();
-
+        debugMode && console.log({"max":max, "skip":skip});
 
         clearTimeout(interval);
         interval = setTimeout(function(){
