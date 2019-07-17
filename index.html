@@ -626,6 +626,8 @@
         //  Set of.
             $(counter).find("#count").text(max);
 
+        //  get_items();
+
             debugMode && console.log({
                 "max":max, "skip":skip, 
                 "index": currentindex,
@@ -684,7 +686,9 @@
 
     //  Set of.
         $(counter).find("#count").text(max);
-        
+
+    //  get_items();
+
         debugMode && console.log({
             "max":max, "skip":skip, 
             "index": currentindex,
@@ -726,12 +730,24 @@
 
             skip = this.skip;
 
+        //  Get current page.
+            currentpage = parseInt( skip / limit );
+
+        //  Get current index.
+            currentindex = parseInt( currentpage % pageslength );
+
+        //  Current button setup.
             pagebuttons.removeClass("btn-primary");
             $(this).addClass("btn-primary");
 
         //  get_items();
 
         }
+
+        debugMode && console.log({
+            "max":max, "skip":skip, 
+            "index": currentindex,
+        });
 
     });
 
