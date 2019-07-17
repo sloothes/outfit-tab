@@ -731,6 +731,7 @@
 
         if ( max < 1 ) return;
         if ( this.skip > max ) return;
+        if ( this.skip == max ) return;
 
         skip = this.skip;
         pagerClicked.dispatch();
