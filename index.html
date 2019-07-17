@@ -459,8 +459,9 @@
 
     const counter        = $(materialItems).find("#counter").get(0);
     const genderDroplist = $(outfitGenderPanel).find("#gender-droplist").get(0);
+    const outfitDroplist = $(outfitMaterialPanel).find("#outfit-slot-droplist").get(0);
     const displayObjects = $(outfitMaterialPanel).find("#documents-display").get(0);
-    const slotDroplist   = $(outfitMaterialPanel).find("#outfit-slot-droplist").get(0);
+
 
 //  Pager.
 
@@ -481,7 +482,8 @@
 
     //  Page buttons numbering.
         pagebuttons.each(function(i){
-            $(pagebuttons[i]).text( i + 1 );  // important! (i + 1);
+            pagebuttons[i].skip = limit * i;
+            $(pagebuttons[i]).text( i + 1 );
         });
 
     //  Current button setup.
@@ -530,10 +532,53 @@
 
     });
 
+/*
+    function get_items(){
+
+        clearTimeout(interval);
+        interval = setTimeout(function(){
+
+            collection.find(selectors).skip(skip)
+            .limit(limit).toArray(function(err){
+                if (err) throw err;
+            }).then(function(docs){
+
+                $(displayObjects).children().remove();
+                debugMode && console.log({"docs":docs});
+
+                docs.forEach(function(json){
+
+                    var element = document.createElement("div");
+                    element.innerText = element.title = json.name;
+                    element.id = json._id; element.classList.add("material-item");
+
+                    $(element).on("click", function(){
+                        $(".material-item").removeClass("selected");
+                        $(element).addClass("selected");
+                        clearTimeout(this.interval);
+                        element.interval = setTimeout( function(){
+                            materialSelected.dispatch(json);
+                        }, 250 );
+                    });
+
+                    $(displayObjects).append( element );
+
+                });
+
+            }).catch(function(err){
+                console.error(err);
+            });
+
+        }, 250 );
+
+    }
+*/
+
+
     droplistChanged.add(function(){
 
         selectors = { 
-            "meta.slot"  : slotDroplist.value,
+            "meta.slot"  : outfitDroplist.value,
             "meta.gender": genderDroplist.value,
         };
 
@@ -553,7 +598,8 @@
 
         //  Page buttons numbering.
             pagebuttons.each(function(i){
-                $(pagebuttons[i]).text( i + 1 );  // important! (i + 1);
+                pagebuttons[i].skip = limit * i;
+                $(pagebuttons[i]).text( i + 1 );
             });
 
         //  Current button setup.
@@ -610,7 +656,9 @@
 
         var num = parseInt( currentpage / pageslength ) * pageslength;
         pagebuttons.each(function(i){
-            $(pagebuttons[i]).text( num + (i + 1) ); // important! (i + 1);
+            var page = num + i;
+            pagebuttons[i].skip = limit * page; // important!
+            $(pagebuttons[i]).text( page + 1 ); // important!
         });
 
     //  Current button setup.
@@ -644,57 +692,11 @@
 
     });
 
-/*
-    pagerClicked.add(function displayItems(){
-
-        var selectors = { 
-            "meta.slot": slotDroplist.value,
-            "meta.gender": genderDroplist.value,
-        };
-
-        clearTimeout(interval);
-        interval = setTimeout(function(){
-
-            collection.find(selectors).skip(skip)
-                .limit(limit).toArray(function(err){
-                if (err) throw err;
-            }).then(function(docs){
-
-                $(displayObjects).children().remove();
-                debugMode && console.log({"docs":docs});
-
-                docs.forEach(function(json){
-
-                    var element = document.createElement("div");
-                    element.innerText = element.title = json.name;
-                    element.id = json._id; element.classList.add("material-item");
-
-                    $(element).on("click", function(){
-                        $(".material-item").removeClass("selected");
-                        $(element).addClass("selected");
-                        clearTimeout(this.interval);
-                        element.interval = setTimeout( function(){
-                            materialSelected.dispatch(json);
-                        }, 250 );
-                    });
-
-                    $(displayObjects).append( element );
-
-                });
-
-            }).catch(function(err){
-                console.error(err);
-            });
-
-        }, 250 );
-
-    });
-*/
 
 
 //  Droplists.
 
-    $(slotDroplist).on("change", function(){
+    $(outfitDroplist).on("change", function(){
         reset(); 
         droplistChanged.dispatch();
     });
@@ -710,12 +712,29 @@
 //  For performance we count items only when we ask last page 
 //  or we change droplist selectors. Not need to count on backward.
 
+    const pageSelector = "#material-pager .page-btn";
     const firstPageBtn = $(pager).find(".first-page-btn").get(0);
     const lastPageBtn  = $(pager).find(".last-page-btn").get(0);
     const prevPageBtn  = $(pager).find(".get-prev-btn").get(0);
     const nextPageBtn  = $(pager).find(".get-next-btn").get(0);
     const prevGroupBtn = $(pager).find(".get-prev-group-btn").get(0);
     const nextGroupBtn = $(pager).find(".get-next-group-btn").get(0);
+
+    $(pageSelector).on("click", function(){
+
+        if ( max > 0 ) {
+
+            skip = this.skip;
+
+            pagebuttons.removeClass("btn-primary");
+            $(this).addClass("btn-primary");
+
+        //  get_items();
+
+        }
+
+    });
+
 
 //  First page.
 
@@ -878,7 +897,7 @@
 
 /*
     var selectors = { 
-        "meta.slot": slotDroplist.value,
+        "meta.slot": outfitDroplist.value,
         "meta.gender": genderDroplist.value,
     };
 */
