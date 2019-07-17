@@ -724,33 +724,15 @@
     const prevGroupBtn = $(pager).find(".get-prev-group-btn").get(0);
     const nextGroupBtn = $(pager).find(".get-next-group-btn").get(0);
 
+//  Page button.
+
     $(pageSelector).on("click", function(){
 
-        if ( max > 0 ) {
-
-            skip = this.skip;
-
-        //  Get current page.
-            currentpage = parseInt( skip / limit );
-
-        //  Get current index.
-            currentindex = parseInt( currentpage % pageslength );
-
-        //  Current button setup.
-            pagebuttons.removeClass("btn-primary");
-            $(this).addClass("btn-primary");
-
-        //  get_items();
-
-        }
-
-        debugMode && console.log({
-            "max":max, "skip":skip, 
-            "index": currentindex,
-        });
+        if ( max < 1 ) return;
+        skip = this.skip;
+        pagerClicked.dispatch();
 
     });
-
 
 //  First page.
 
@@ -839,6 +821,7 @@
 
     });
 
+//  Prev group.
 
     $(prevGroupBtn).on("click", function(){
 
@@ -857,6 +840,7 @@
 
     });
 
+//  Next group.
 
     $(nextGroupBtn).on("click", function(){
 
