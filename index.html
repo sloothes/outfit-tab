@@ -432,9 +432,35 @@
 
 (function(){
 
-    var interval;
+//  Collection.
+
+    const db = new zango.Db( "USER", {
+        materials:  true,
+    });
+
+    db.open(function(err, database){
+        if (err) console.error(err);
+    }).then( function(){
+        debugMode && console.log(`Database ${db.name} (v${db.version}) opened.`);
+    }).catch(function(err){
+        console.error(err);
+    });
+
+    const collection = db.collection("materials");
+    debugMode && console.log({"collection":collection});
+
+    const viewer = document.getElementById("viewer");
+    const pager = document.getElementById("material-pager");
+    const genderDroplist = document.getElementById("gender-droplist");
+    const materialChooser = document.getElementById("material-chooser");
+    const counter = $("#material-items").find("#counter").get(0);
+    const slotDroplist = $(materialChooser).find("#outfit-slot-droplist").get(0);
+    const displayObjects = $(materialChooser).find("#documents-display").get(0);
 
 //  Pager.
+
+    var interval;
+    var selectors = {};
 
     var max = 0;
     var skip = 0;
@@ -445,7 +471,7 @@
     const limit = 5;
     const pageslength = $("#material-items").find(".page-btn").length;
 
-    function resetPager(){
+    function reset(){
         max = 0;
         skip = 0;
         lastpage = 0;
@@ -453,57 +479,81 @@
         currentindex = 0;
     }
 
-//  Collection.
-
-    const DB = new zango.Db( "USER", {
-        materials:  true,
-    });
-
-    DB.open(function(err, database){
-        if (err) console.error(err);
-    }).then( function(){
-        debugMode && console.log(`Database ${DB.name} (v${DB.version}) opened.`);
-    }).catch(function(err){
-        console.error(err);
-    });
-
-    const collection = DB.collection("materials");
-    debugMode && console.log({"collection":collection});
-
-
-    const viewer = document.getElementById("viewer");
-    const materialPager = document.getElementById("material-pager");
-    const genderDroplist = document.getElementById("gender-droplist");
-    const materialChooser = document.getElementById("material-chooser");
-    const materialCounter = $("#material-items").find("#counter").get(0);
-    const slotDroplist = $(materialChooser).find("#outfit-slot-droplist").get(0);
-    const displayObjects = $(materialChooser).find("#documents-display").get(0);
-
-
 //  Signals.
 
     var Signal = signals.Signal;
+    var pagerClicked = new Signal();
     var droplistChanged = new Signal();
     var materialSelected = new Signal();
 
     materialSelected.add(function(json){
 
-        var data = {
-            material: json,
-            slot: json.meta.slot,
-            gender: json.meta.gender,
-        };
+        var data = {};
+        data.slot = json.meta.slot;
+        data.gender = json.meta.gender;
+        data.material = json;
 
         if ( window.socket ) {
-            socket.publish(localPlayerMaterialChannel, data); // under constuction!
+            socket.publish(localPlayerMaterialChannel, data); // TODO.
         } else {
             viewer.contentWindow.localPlayerApplyMaterial(data);
         }
 
     });
 
-
     droplistChanged.add(function(){
+
+        selectors = { 
+            "meta.slot"  : slotDroplist.value,
+            "meta.gender": genderDroplist.value,
+        };
+
+    });
+
+    pagerClicked.add(function(){
+
+    //  Pager.
+
+        lastpage = parseInt( max / limit );
+        currentpage = parseInt( skip / limit );
+
+        currentindex = parseInt( currentpage % pageslength );
+        debugMode && console.log("currentindex:", currentindex);
+
+        var pagebuttons = $(materialPager).find(".page-btn");
+
+        var num = parseInt( currentpage / pageslength );
+        pagebuttons.each(function(i){
+            var p = (num * pageslength) + 1; // important!
+            $(pagebuttons[i]).text( p + i );
+        });
+
+        pagebuttons.removeClass("btn-primary");
+        var currentButton = pagebuttons.get( currentindex );
+        $(currentButton).addClass("btn-primary");
+
+        $(counter).find("#count").text(max);
+
+        if ( max == 0 ) {  // => (skip = 0) 
+            $(counter).find("#from").text("0"); 
+        } else if ( skip == max ) {
+            $(counter).find("#from").text(skip);
+        } else {
+            $(counter).find("#from").text(skip + 1);
+        }
+
+        if ( skip + limit > max ) {
+            $(counter).find("#upto").text( max );
+        } else {
+            $(counter).find("#upto").text(skip + limit);
+        }
+
+        debugMode && console.log({"max":max, "skip":skip});
+
+    });
+
+/*
+    pagerClicked.add(function(){
 
         var selectors = { 
             "meta.slot": slotDroplist.value,
@@ -547,124 +597,112 @@
         }, 250 );
 
     });
-
-//  Event listeners.
+*/
 
     $(slotDroplist).on("change", function(){
-        resetPager();
+        reset();
         droplistChanged.dispatch();
     });
 
     $(genderDroplist).on("change", function(){
-        resetPager();
+        reset();
         droplistChanged.dispatch();
     });
 
-    //  Pager Controls.
 
-    $(materialPager).find(".first-page-btn").on("click", function(){
+//  First page.
+
+    $(pager).find(".first-page-btn").on("click", function(){
+
         skip = 0;
-        droplistChanged.dispatch();
+        pagerClicked.dispatch();
+
     });
 
-    $(materialPager).find(".last-page-btn").on("click", function(){
-        lastpage = parseInt(max / limit);
-        skip = limit * lastpage;
-        droplistChanged.dispatch();
-    });
+//  Last page.
 
-    $(materialPager).find(".get-prev-btn").on("click", function(){
+    $(pager).find(".last-page-btn").on("click", async function(){
 
-        if ( skip - limit < 0 ) {
-            skip = 0;
-            currentindex = 0;
-        } else {
-            skip -= limit;
-        }
-
-
-        droplistChanged.dispatch();
-    });
-
-    $(materialPager).find(".get-next-btn").on("click", async function(){
-
+    /*
         var selectors = { 
             "meta.slot": slotDroplist.value,
             "meta.gender": genderDroplist.value,
         };
+    */
 
     //  Count max.
 
-        var max = skip;
+        var k = skip;
         await collection.find(selectors)
-            .skip(skip).forEach(function(){
-            ++max;
+        .skip(skip).forEach(function(){
+            ++k;
         });
 
-        debugMode && console.log("max:", max);
+        max = k;  debugMode && console.log("max:", max);
 
     //  Define skip.
 
-        if ( skip == max ) {
-            skip = max;
-        } else if ( skip + limit > max ) {
+        skip = limit * parseInt(max / limit);  //  lastpage = parseInt(max / limit);
+
+        pagerClicked.dispatch();
+
+    });
+
+//  Prev page.
+
+    $(pager).find(".get-prev-btn").on("click", function(){
+
+    //  Define skip.
+
+        if ( skip - limit < 0 ) {
+
+            skip = 0;  //  currentindex = 0;
+
+        } else {
+
+            skip -= limit;
+        }
+
+        pagerClicked.dispatch();
+
+    });
+
+//  Next page.
+
+    $(pager).find(".get-next-btn").on("click", async function(){
+
+    /*
+        var selectors = { 
+            "meta.slot": slotDroplist.value,
+            "meta.gender": genderDroplist.value,
+        };
+    */
+
+    //  Count max.
+
+        var k = skip;
+        await collection.find(selectors)
+        .skip(skip).forEach(function(){
+            ++k;
+        });
+
+        max = k;  debugMode && console.log("max:", max);
+
+    //  Define skip.
+
+        if ( skip + limit > max - 1 ) {
             skip = limit * parseInt(max / limit);  // limit * lastpage;
         } else {
             skip += limit;
         }
 
-    //  Pager.
-
-        lastpage = parseInt( max / limit );
-        currentpage = parseInt( skip / limit );
-
-        currentindex = parseInt( currentpage % pageslength );
-        debugMode && console.log("currentindex:", currentindex);
-
-        var pagebuttons = $(materialPager).find(".page-btn");
-
-        var num = parseInt( currentpage / pageslength );
-        pagebuttons.each(function(i){
-            var p = (num * pageslength) + 1; // important!
-            $(pagebuttons[i]).text( p + i );
-        });
-
-        pagebuttons.removeClass("btn-primary");
-        var currentButton = pagebuttons.get( currentindex );
-        $(currentButton).addClass("btn-primary");
-
-        $(materialCounter).find("#count").text(max);
-
-        if ( max == 0 ) {  // => (skip = 0) 
-            $(materialCounter).find("#from").text("0"); 
-        } else if ( skip == max ) {
-            $(materialCounter).find("#from").text(skip);
-        } else {
-            $(materialCounter).find("#from").text(skip + 1);
-        }
-
-        if ( skip + limit > max ) {
-            $(materialCounter).find("#upto").text( max );
-        } else {
-            $(materialCounter).find("#upto").text(skip + limit);
-        }
-
-        debugMode && console.log({"max":max, "skip":skip});
-
-    //  droplistChanged.dispatch();
+        pagerClicked.dispatch();
 
     });
 
 
-    $(materialPager).find(".get-next-group-btn").on("click", function(){
-
-
-    });
-
-    $(materialPager).find(".get-prev-group-btn").on("click", function(){
-
-
-    });
+    $(pager).find(".get-next-group-btn").on("click", function(){});
+    $(pager).find(".get-prev-group-btn").on("click", function(){});
 
 
 })();
