@@ -33,11 +33,11 @@
 
 </style>
 
-<div class="helpers-header gender-header">
+<div id="outfit-gender-panel" class="helpers-header gender-header">
     <h4 style="margin-bottom:30px;">
         <span style="vertical-align:-0.5rem;">Select gender:</span>
         <div style="display:inline-block;width:50%;float:right;">
-            <select id="gender-droplist" class="form-control gender droplist" readOnly>
+            <select id="gender-droplist" class="form-control gender-droplist" readOnly>
                 <option value="">Select sex:</option>
                 <option value="male">male</option>
                 <option value="female">female</option>
@@ -51,7 +51,8 @@
 (function(){
 
     const viewer = document.getElementById("viewer");
-    const droplist = document.getElementById("gender-droplist");
+    const outfitGenderPanel = document.getElementById("outfit-gender-panel");
+    const droplist = $(outfitGenderPanel).find("#gender-droplist").get(0);
 
     const outfitHelpersTabSelector = ".outfit-helpers.component-pane.tab-pane";
     const maleOutfitHelpersSelector = "#male-outfit-helpers";
@@ -312,7 +313,7 @@
     <h3>Costumize outfit:</h3>
 </div>
 
-<div id="material-chooser" class="tab-content">
+<div id="outfit-material-panel" class="tab-content">
 
     <div>
         <h4 style="margin-bottom:30px;">
@@ -379,7 +380,7 @@
 
     const helpersHeaderSelector = ".helpers-header";
     const materialHeaderSelector = ".material-header";
-    const materialChooser = $("#material-chooser").get(0);
+    const outfitMaterialPanel = document.getElementById("outfit-material-panel");
 
     var Signal = signals.Signal;
     var dblclicked = new Signal();
@@ -398,7 +399,7 @@
 
 //  Dispatch events.
     $(materialHeaderSelector).on("dblclick", function(){
-        dblclicked.dispatch( materialChooser );
+        dblclicked.dispatch( outfitMaterialPanel );
     });
 
 })();
@@ -410,7 +411,8 @@
 (function(){
 
     const viewer = document.getElementById("viewer");
-    const slotDroplist = $("#material-chooser").find("select#outfit-slot-droplist").get(0);
+    const outfitMaterialPanel = document.getElementById("outfit-material-panel");
+    const slotDroplist = $(outfitMaterialPanel).find("select#outfit-slot-droplist").get(0);
 
     var Signal = signals.Signal;
     var outfitSlotChanged = new Signal();
@@ -450,12 +452,15 @@
     debugMode && console.log({"collection":collection});
 
     const viewer = document.getElementById("viewer");
-    const pager = document.getElementById("material-pager");
-    const genderDroplist = document.getElementById("gender-droplist");
-    const materialChooser = document.getElementById("material-chooser");
-    const counter = $("#material-items").find("#counter").get(0);
-    const slotDroplist = $(materialChooser).find("#outfit-slot-droplist").get(0);
-    const displayObjects = $(materialChooser).find("#documents-display").get(0);
+    const pager  = document.getElementById("material-pager");
+    const materialItems = document.getElementById("material-items");
+    const outfitGenderPanel = document.getElementById("outfit-gender-panel");
+    const outfitMaterialPanel = document.getElementById("outfit-material-panel");
+
+    const counter        = $(materialItems).find("#counter").get(0);
+    const genderDroplist = $(outfitGenderPanel).find("#gender-droplist").get(0);
+    const displayObjects = $(outfitMaterialPanel).find("#documents-display").get(0);
+    const slotDroplist   = $(outfitMaterialPanel).find("#outfit-slot-droplist").get(0);
 
 //  Pager.
 
@@ -467,6 +472,7 @@
     var lastpage = 0;
     var currentpage = 0;
     var currentindex = 0;
+    var pagebuttons = $(pager).find(".page-btn");
 
     const limit = 5;
     const pageslength = $("#material-items").find(".page-btn").length;
@@ -477,6 +483,15 @@
         lastpage = 0;
         currentpage = 0;
         currentindex = 0;
+    }
+
+    async function count(){
+        var k = skip;
+        await collection.find(selectors)
+        .skip(skip).forEach(function(){
+            ++k;
+        });
+        return k;
     }
 
 //  Signals.
@@ -508,33 +523,77 @@
             "meta.gender": genderDroplist.value,
         };
 
+        debugMode && console.log(selectors);
+
+        count().then(function(k){
+
+        //  Set max.
+
+            max = k;  debugMode && console.log("max:", max);
+
+        //  current page.
+            lastpage = parseInt( max / limit );
+            currentpage = 1;  currentindex = 0;
+
+        //  page buttons.
+        //  var pagebuttons = $(pager).find(".page-btn");
+            pagebuttons.each(function(i){
+                $(pagebuttons[i]).text( i + 1 ); // important!
+            });
+
+        //  current button.
+            pagebuttons.removeClass("btn-primary");
+            var currentButton = pagebuttons.get(0);
+            $(currentButton).addClass("btn-primary");
+
+        //  from.
+            if ( max == 0 ) {
+                $(counter).find("#from").text("0"); 
+            } else {
+                $(counter).find("#from").text("1");
+            }
+
+        //  to item.
+            if ( max == 0 ) {
+                $(counter).find("#upto").text("0"); 
+            } else if ( skip + limit > max ) {
+                $(counter).find("#upto").text( max );
+            } else {
+                $(counter).find("#upto").text(skip + limit);
+            }
+
+        //  of max.
+            $(counter).find("#count").text(max);
+
+        });
+
     });
 
     pagerClicked.add(function(){
 
-    //  Pager.
-
+    //  current page.
         lastpage = parseInt( max / limit );
         currentpage = parseInt( skip / limit );
 
+    //  current index.
         currentindex = parseInt( currentpage % pageslength );
-        debugMode && console.log("currentindex:", currentindex);
+    //  debugMode && console.log("currentindex:", currentindex);
 
-        var pagebuttons = $(pager).find(".page-btn");
-
+    //  page buttons.
+    //  var pagebuttons = $(pager).find(".page-btn");
         var num = parseInt( currentpage / pageslength );
         pagebuttons.each(function(i){
             var p = (num * pageslength) + 1; // important!
             $(pagebuttons[i]).text( p + i );
         });
 
+    //  current button.
         pagebuttons.removeClass("btn-primary");
         var currentButton = pagebuttons.get( currentindex );
         $(currentButton).addClass("btn-primary");
 
-        $(counter).find("#count").text(max);
-
-        if ( max == 0 ) {  // => (skip = 0) 
+    //  from.
+        if ( max == 0 ) {
             $(counter).find("#from").text("0"); 
         } else if ( skip == max ) {
             $(counter).find("#from").text(skip);
@@ -542,18 +601,27 @@
             $(counter).find("#from").text(skip + 1);
         }
 
+    //  to item.
+        if ( max == 0 ) {
+            $(counter).find("#upto").text("0");
         if ( skip + limit > max ) {
             $(counter).find("#upto").text( max );
         } else {
             $(counter).find("#upto").text(skip + limit);
         }
 
-        debugMode && console.log({"max":max, "skip":skip});
+    //  of max.
+        $(counter).find("#count").text(max);
+        
+        debugMode && console.log({
+            "max":max, "skip":skip,
+            "currentindex": currentindex,
+        });
 
     });
 
 /*
-    pagerClicked.add(function(){
+    pagerClicked.add(function displayItems(){
 
         var selectors = { 
             "meta.slot": slotDroplist.value,
@@ -599,8 +667,11 @@
     });
 */
 
+
+//  Droplists.
+
     $(slotDroplist).on("change", function(){
-        reset();
+        reset(); 
         droplistChanged.dispatch();
     });
 
@@ -621,30 +692,21 @@
 
 //  Last page.
 
-    $(pager).find(".last-page-btn").on("click", async function(){
+    $(pager).find(".last-page-btn").on("click", function(){
 
-    /*
-        var selectors = { 
-            "meta.slot": slotDroplist.value,
-            "meta.gender": genderDroplist.value,
-        };
-    */
+        count().then(function(k){
 
-    //  Count max.
+        //  Set max.
 
-        var k = skip;
-        await collection.find(selectors)
-        .skip(skip).forEach(function(){
-            ++k;
+            max = k;  debugMode && console.log("max:", max);
+
+        //  Set skip.
+
+            skip = limit * parseInt(max / limit); //  lastpage = parseInt(max / limit);
+
+            pagerClicked.dispatch();
+
         });
-
-        max = k;  debugMode && console.log("max:", max);
-
-    //  Define skip.
-
-        skip = limit * parseInt(max / limit);  //  lastpage = parseInt(max / limit);
-
-        pagerClicked.dispatch();
 
     });
 
@@ -652,11 +714,11 @@
 
     $(pager).find(".get-prev-btn").on("click", function(){
 
-    //  Define skip.
+    //  Set skip.
 
         if ( skip - limit < 0 ) {
 
-            skip = 0;  //  currentindex = 0;
+            skip = 0;
 
         } else {
 
@@ -671,32 +733,30 @@
 
     $(pager).find(".get-next-btn").on("click", async function(){
 
-    /*
-        var selectors = { 
-            "meta.slot": slotDroplist.value,
-            "meta.gender": genderDroplist.value,
-        };
-    */
+        count().then(function(k){
 
-    //  Count max.
+        //  Set max.
 
-        var k = skip;
-        await collection.find(selectors)
-        .skip(skip).forEach(function(){
-            ++k;
+            max = k;  debugMode && console.log("max:", max);
+
+        //  Set skip.
+
+            if ( skip + limit > max ) {
+
+                skip = limit * parseInt(max / limit);  // limit * lastpage;
+
+            } else if ( skip + limit == max ) {
+
+                skip;
+
+            } else {
+
+                skip += limit;
+            }
+
+            pagerClicked.dispatch();
+
         });
-
-        max = k;  debugMode && console.log("max:", max);
-
-    //  Define skip.
-
-        if ( skip + limit > max - 1 ) {
-            skip = limit * parseInt(max / limit);  // limit * lastpage;
-        } else {
-            skip += limit;
-        }
-
-        pagerClicked.dispatch();
 
     });
 
@@ -707,5 +767,33 @@
 
 })();
 
+</script>
+
+
+
+
+
+
+
+
+<script>
+
+/*
+    var selectors = { 
+        "meta.slot": slotDroplist.value,
+        "meta.gender": genderDroplist.value,
+    };
+*/
+
+//  Count max.
+
+/*
+    var k = skip;
+    await collection.find(selectors)
+        .skip(skip).forEach(function(){
+        ++k;
+    });
+    max = k;  debugMode && console.log("max:", max);
+*/
 </script>
 
