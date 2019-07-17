@@ -713,7 +713,7 @@
 
 //  First page.
 
-    $(pager).find(".first-page-btn").on("click", function(){
+    $(firstPageBtn).on("click", function(){
 
         skip = 0;
         pagerClicked.dispatch();
@@ -722,7 +722,7 @@
 
 //  Last page.
 
-    $(pager).find(".last-page-btn").on("click", function(){
+    $(lastPageBtn).on("click", function(){
 
         count().then(function(k){
 
@@ -752,7 +752,7 @@
 
 //  Prev page.
 
-    $(pager).find(".get-prev-btn").on("click", function(){
+    $(prevPageBtn).on("click", function(){
 
     //  Set skip.
 
@@ -771,7 +771,7 @@
 
 //  Next page.
 
-    $(pager).find(".get-next-btn").on("click", async function(){
+    $(nextPageBtn).on("click", function(){
 
         var lastpage = parseInt(max / limit);
 
@@ -790,8 +790,42 @@
     });
 
 
-    $(pager).find(".get-next-group-btn").on("click", function(){});
-    $(pager).find(".get-prev-group-btn").on("click", function(){});
+    $(prevGroupBtn).on("click", function(){
+
+        var offset = pageslength * limit;
+
+        if ( skip - offset < 0 ) {
+
+            skip = 0;
+
+        } else {
+
+            skip -= offset;
+        }
+
+        pagerClicked.dispatch();
+
+    });
+
+
+    $(nextGroupBtn).on("click", function(){
+
+        var offset = pageslength * limit;
+        var lastpage = parseInt(max / limit);
+
+        if ( skip + offset < max )
+
+            skip += offset;
+
+        else if ( skip + offset > max )
+
+            skip = limit * lastpage;  //  skip = limit * parseInt(max / limit);
+
+    //  else if ( skip + offset == max ) skip;
+
+        pagerClicked.dispatch();
+
+    });
 
 
 })();
