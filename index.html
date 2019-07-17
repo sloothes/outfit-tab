@@ -468,7 +468,7 @@
 //  Pager.
 
     var interval;
-    var selectors = {};
+    var selectors;
 
     var max = 0;
     var skip = 0;
@@ -578,7 +578,7 @@
 
         selectors = { 
             "meta.slot"  : outfitDroplist.value,
-            "meta.gender": genderDroplist.value || viewer.contentWindow.localPlayer.outfit.getGedner(),
+            "meta.gender": genderDroplist.value,
         };
 
         debugMode && console.log(selectors);
