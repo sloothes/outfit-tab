@@ -520,7 +520,7 @@
         currentindex = parseInt( currentpage % pageslength );
         debugMode && console.log("currentindex:", currentindex);
 
-        var pagebuttons = $(materialPager).find(".page-btn");
+        var pagebuttons = $(pager).find(".page-btn");
 
         var num = parseInt( currentpage / pageslength );
         pagebuttons.each(function(i){
