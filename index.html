@@ -699,6 +699,7 @@
         droplistChanged.dispatch();
     });
 
+
 //  Pager.
 
 //  For performance we count items only when we ask last page 
@@ -730,19 +731,25 @@
 
             max = k;
 
-        //  Set skip. 
-            
-            var lastpage = parseInt(max / limit);
+            if ( max > 0 ) {
 
-            if ( limit * lastpage < max ) {
+                var lastpage = parseInt(max / limit);
 
-                skip = limit * lastpage;          //  limit * parseInt(max / limit);
+                if ( limit * lastpage < max ) {
 
-             } else {
+                    skip = limit * lastpage;          //  limit * parseInt(max / limit);
 
-                skip = limit * ( lastpage - 1 );  //  limit * ( parseInt(max / limit) - 1 );
+                 } else {
 
-             }
+                    skip = limit * ( lastpage - 1 );  //  limit * ( parseInt(max / limit) - 1 );
+
+                 }
+
+            } else {
+
+                skip = 0;
+
+            }
 
             pagerClicked.dispatch();
 
@@ -811,7 +818,7 @@
     $(nextGroupBtn).on("click", function(){
 
         var offset = pageslength * limit;
-        var lastpage = parseInt(max / limit);
+        var lastpage = parseInt(max / offset);
 
         if ( skip + offset < max )
 
@@ -819,7 +826,7 @@
 
         else if ( skip + offset > max )
 
-            skip = limit * lastpage;  //  skip = limit * parseInt(max / limit);
+            skip = offset * lastpage;  //  skip = limit * parseInt(max / limit);
 
     //  else if ( skip + offset == max ) skip;
 
