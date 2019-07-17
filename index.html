@@ -475,7 +475,21 @@
     var pagebuttons = $(pager).find(".page-btn");
 
     const limit = 5;
-    const pageslength = $("#material-items").find(".page-btn").length;
+    const pageslength = $(materialItems).find(".page-btn").length;
+
+    (function(){
+
+    //  Page buttons numbering.
+        pagebuttons.each(function(i){
+            $(pagebuttons[i]).text( i + 1 );  // important! (i + 1);
+        });
+
+    //  Current button setup.
+        pagebuttons.removeClass("btn-primary");
+        var currentButton = pagebuttons.get(0);
+        $(currentButton).addClass("btn-primary");
+
+    })();
 
     function reset(){
         max = 0;
@@ -528,32 +542,33 @@
         count().then(function(k){
 
         //  Set max.
+            max = k;  //  debugMode && console.log("max:", max);
 
-            max = k;  debugMode && console.log("max:", max);
-
-        //  current page.
+        //  Get last page.
             lastpage = parseInt( max / limit );
-            currentpage = 1;  currentindex = 0;
 
-        //  page buttons.
-        //  var pagebuttons = $(pager).find(".page-btn");
+        //  Set current page.
+            currentpage = 1;  
+            currentindex = 0;
+
+        //  Page buttons numbering.
             pagebuttons.each(function(i){
-                $(pagebuttons[i]).text( i + 1 ); // important!
+                $(pagebuttons[i]).text( i + 1 );  // important! (i + 1);
             });
 
-        //  current button.
+        //  Current button setup.
             pagebuttons.removeClass("btn-primary");
             var currentButton = pagebuttons.get(0);
             $(currentButton).addClass("btn-primary");
 
-        //  from.
+        //  Set from.
             if ( max == 0 ) {
                 $(counter).find("#from").text("0"); 
             } else {
                 $(counter).find("#from").text("1");
             }
 
-        //  to item.
+        //  Set to.
             if ( max == 0 ) {
                 $(counter).find("#upto").text("0"); 
             } else if ( skip + limit > max ) {
@@ -562,7 +577,7 @@
                 $(counter).find("#upto").text(skip + limit);
             }
 
-        //  of max.
+        //  Set of.
             $(counter).find("#count").text(max);
 
         });
@@ -571,51 +586,55 @@
 
     pagerClicked.add(function(){
 
-    //  current page.
+    //  Get last page.
         lastpage = parseInt( max / limit );
+
+    //  Get current page.
         currentpage = parseInt( skip / limit );
 
-    //  current index.
+    //  Get current index.
         currentindex = parseInt( currentpage % pageslength );
-    //  debugMode && console.log("currentindex:", currentindex);
 
-    //  page buttons.
-    //  var pagebuttons = $(pager).find(".page-btn");
-        var num = parseInt( currentpage / pageslength );
+    //  Page buttons numbering.
+
+        //  var num = parseInt( currentpage / pageslength );
+        //  pagebuttons.each(function(i){
+        //      var p = (num * pageslength) + 1;
+        //      $(pagebuttons[i]).text( p + i );
+        //  });
+
+        var num = parseInt( currentpage / pageslength ) * pageslength;
         pagebuttons.each(function(i){
-            var p = (num * pageslength) + 1; // important!
-            $(pagebuttons[i]).text( p + i );
+            $(pagebuttons[i]).text( num + (i + 1) ); // important! (i + 1);
         });
 
-    //  current button.
+    //  Current button setup.
         pagebuttons.removeClass("btn-primary");
         var currentButton = pagebuttons.get( currentindex );
         $(currentButton).addClass("btn-primary");
 
-    //  from.
-        if ( max == 0 ) {
+    //  Set from.
+        if ( max == 0 )
             $(counter).find("#from").text("0"); 
-        } else if ( skip == max ) {
+        else if ( skip == max )
             $(counter).find("#from").text(skip);
-        } else {
+        else
             $(counter).find("#from").text(skip + 1);
-        }
 
-    //  to item.
-        if ( max == 0 ) {
+    //  Set to.
+        if ( max == 0 )
             $(counter).find("#upto").text("0");
-        } else if ( skip + limit > max ) {
+        else if ( skip + limit > max )
             $(counter).find("#upto").text( max );
-        } else {
+        else
             $(counter).find("#upto").text(skip + limit);
-        }
 
-    //  of max.
+    //  Set of.
         $(counter).find("#count").text(max);
         
         debugMode && console.log({
-            "max":max, "skip":skip,
-            "currentindex": currentindex,
+            "max":max, "skip":skip, 
+            "index": currentindex,
         });
 
     });
@@ -680,6 +699,17 @@
         droplistChanged.dispatch();
     });
 
+//  Pager.
+
+//  For performance we count items only when we ask last page 
+//  or we change droplist selectors. Not need to count on backward.
+
+    const firstPageBtn = $(pager).find(".first-page-btn").get(0);
+    const lastPageBtn  = $(pager).find(".last-page-btn").get(0);
+    const prevPageBtn  = $(pager).find(".get-prev-btn").get(0);
+    const nextPageBtn  = $(pager).find(".get-next-btn").get(0);
+    const prevGroupBtn = $(pager).find(".get-prev-group-btn").get(0);
+    const nextGroupBtn = $(pager).find(".get-next-group-btn").get(0);
 
 //  First page.
 
@@ -698,11 +728,11 @@
 
         //  Set max.
 
-            max = k;  //  debugMode && console.log("max:", max);
+            max = k;
 
         //  Set skip. 
             
-            lastpage = parseInt(max / limit);
+            var lastpage = parseInt(max / limit);
 
             if ( limit * lastpage < max ) {
 
@@ -743,7 +773,7 @@
 
     $(pager).find(".get-next-btn").on("click", async function(){
 
-    //  lastpage = parseInt(max / limit);
+        var lastpage = parseInt(max / limit);
 
         if ( skip + limit < max )
 
@@ -751,7 +781,7 @@
 
         else if ( skip + limit > max )
             
-            skip = limit * parseInt(max / limit);  //  skip = limit * lastpage;
+            skip = limit * lastpage;  //  skip = limit * parseInt(max / limit);
 
     //  else if ( skip + limit == max ) skip;
 
