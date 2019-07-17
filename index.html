@@ -33,75 +33,6 @@
 
 </style>
 
-<div id="outfit-gender-panel" class="helpers-header gender-header">
-    <h4 style="margin-bottom:30px;">
-        <span style="vertical-align:-0.5rem;">Select gender:</span>
-        <div style="display:inline-block;width:50%;float:right;">
-            <select id="gender-droplist" class="form-control gender-droplist" readOnly>
-                <option value="">Select sex:</option>
-                <option value="male">male</option>
-                <option value="female">female</option>
-            </select>
-        </div>
-    </h4>
-</div>
-
-<script>
-
-(function(){
-
-    const viewer = document.getElementById("viewer");
-    const outfitGenderPanel = document.getElementById("outfit-gender-panel");
-    const droplist = $(outfitGenderPanel).find("#gender-droplist").get(0);
-
-    const outfitHelpersTabSelector = ".outfit-helpers.component-pane.tab-pane";
-    const maleOutfitHelpersSelector = "#male-outfit-helpers";
-    const femaleOutfitHelpersSelector = "#female-outfit-helpers";
-
-    var Signal = signals.Signal;
-    var genderChanged = new Signal();
-
-    genderChanged.add(function(value){
-
-        var data = "/gender/" + value;  // important!
-        $(outfitHelpersTabSelector).removeClass("in active");
-
-        if ( window.socket ) {
-
-            socket.publish(localPlayerChannel, data, function(err){
-
-                if (err) console.error(err);
-
-                if ( data == "/gender/male" ) 
-                    $(maleOutfitHelpersSelector).addClass("in active");
-
-                if ( data == "/gender/female" )
-                    $(femaleOutfitHelpersSelector).addClass("in active");
-
-            });
-
-        } else {
-
-            viewer.contentWindow.localPlayerHandler(data);
-
-            if ( data == "/gender/male" ) 
-                $(maleOutfitHelpersSelector).addClass("in active");
-
-            if ( data == "/gender/female" )
-                $(femaleOutfitHelpersSelector).addClass("in active");
-
-        }
-
-    });
-
-    $(droplist).on("change", function(){
-        genderChanged.dispatch( this.value );
-        if (this.value) store( "Sex", "/gender/" + this.value );
-    });
-
-})();
-
-</script>
 
 <div class="helpers-header outfit-header">
     <h3>Outfit helpers:</h3>
@@ -313,6 +244,20 @@
     <h3>Costumize outfit:</h3>
 </div>
 
+<div id="outfit-gender-panel" class="helpers-header gender-header">
+    <h4 style="margin-bottom:30px;">
+        <span style="vertical-align:-0.5rem;">Select gender:</span>
+        <div style="display:inline-block;width:50%;float:right;">
+            <select id="gender-droplist" class="form-control gender-droplist" readOnly>
+                <option value="">Select sex:</option>
+                <option value="male">male</option>
+                <option value="female">female</option>
+            </select>
+        </div>
+    </h4>
+</div>
+
+
 <div id="outfit-material-panel" class="tab-content">
 
     <div>
@@ -373,6 +318,63 @@
 </div>
 
 <hr/>
+
+<script>
+
+(function(){
+
+    const viewer = document.getElementById("viewer");
+    const outfitGenderPanel = document.getElementById("outfit-gender-panel");
+    const droplist = $(outfitGenderPanel).find("#gender-droplist").get(0);
+
+    const outfitHelpersTabSelector = ".outfit-helpers.component-pane.tab-pane";
+    const maleOutfitHelpersSelector = "#male-outfit-helpers";
+    const femaleOutfitHelpersSelector = "#female-outfit-helpers";
+
+    var Signal = signals.Signal;
+    var genderChanged = new Signal();
+
+    genderChanged.add(function(value){
+
+        var data = "/gender/" + value;  // important!
+        $(outfitHelpersTabSelector).removeClass("in active");
+
+        if ( window.socket ) {
+
+            socket.publish(localPlayerChannel, data, function(err){
+
+                if (err) console.error(err);
+
+                if ( data == "/gender/male" ) 
+                    $(maleOutfitHelpersSelector).addClass("in active");
+
+                if ( data == "/gender/female" )
+                    $(femaleOutfitHelpersSelector).addClass("in active");
+
+            });
+
+        } else {
+
+            viewer.contentWindow.localPlayerHandler(data);
+
+            if ( data == "/gender/male" ) 
+                $(maleOutfitHelpersSelector).addClass("in active");
+
+            if ( data == "/gender/female" )
+                $(femaleOutfitHelpersSelector).addClass("in active");
+
+        }
+
+    });
+
+    $(droplist).on("change", function(){
+        genderChanged.dispatch( this.value );
+        if (this.value) store( "Sex", "/gender/" + this.value );
+    });
+
+})();
+
+</script>
 
 <script>
 
@@ -576,7 +578,7 @@
 
         selectors = { 
             "meta.slot"  : outfitDroplist.value,
-            "meta.gender": genderDroplist.value,
+            "meta.gender": genderDroplist.value || viewer.contentWindow.localPlayer.outfit.getGedner(),
         };
 
         debugMode && console.log(selectors);
