@@ -828,17 +828,26 @@
     $(nextGroupBtn).on("click", function(){
 
         var offset = pageslength * limit;
-        var lastpage = parseInt(max / limit);
 
-        if ( skip + offset < max )
+        if ( max > 0 ) {
 
-            skip += offset;
+            var lastpage = parseInt(max / limit);
 
-        else if ( skip + offset > max )
+            if ( skip + offset < max ) {
 
-            skip = limit * ( lastpage - 1 );  //  limit * ( parseInt(max / limit) - 1 );
+                skip += offset;
 
-    //  else if ( skip + offset == max ) skip;
+            } else {
+
+                skip = limit * ( lastpage - 1 );
+
+            }
+
+        } else {
+
+            skip = 0;
+
+        }
 
         pagerClicked.dispatch();
 
