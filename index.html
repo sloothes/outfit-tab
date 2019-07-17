@@ -771,8 +771,6 @@
 
     $(prevPageBtn).on("click", function(){
 
-    //  Set skip.
-
         if ( skip - limit < 0 ) {
 
             skip = 0;
@@ -798,7 +796,7 @@
 
         else if ( skip + limit > max )
             
-            skip = limit * lastpage;  //  skip = limit * parseInt(max / limit);
+            skip = limit * lastpage;
 
     //  else if ( skip + limit == max ) skip;
 
@@ -837,7 +835,11 @@
 
                 skip += offset;
 
-            } else {
+            } else if ( skip + offset > max ) {
+
+                skip = limit * lastpage;
+
+            } else {  //  if ( skip + offset == max ) {
 
                 skip = limit * ( lastpage - 1 );
 
