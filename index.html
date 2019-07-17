@@ -837,9 +837,16 @@
 
             } else if ( skip + offset > max ) {
 
-                skip = limit * lastpage;
+                if ( limit * lastpage < max ) {
 
-            } else {  //  if ( skip + offset == max ) {
+                    skip = limit * lastpage;
+
+                } else {
+
+                    skip = limit * ( lastpage - 1 );
+                }
+
+            } else if ( skip + offset == max ) {
 
                 skip = limit * ( lastpage - 1 );
 
