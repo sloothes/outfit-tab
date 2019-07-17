@@ -502,63 +502,6 @@
 
     });
 
-    droplistChanged.add(async function(){
-
-        var selectors = { 
-            "meta.slot": slotDroplist.value,
-            "meta.gender": genderDroplist.value,
-        };
-
-    //  count.
-
-        var k = skip;
-        await collection.find(selectors)
-            .skip(skip).forEach(function(){
-            ++k;
-        });
-
-        debugMode && console.log("k:", k);
-
-        //  pager.
-
-        max = k; 
-        lastpage = parseInt( max / limit );
-        currentpage = parseInt( skip / limit );
-
-        currentindex = parseInt( currentpage % pageslength );
-        debugMode && console.log("currentindex:", currentindex);
-
-        var pagebuttons = $(materialPager).find(".page-btn");
-
-        var num = parseInt( currentpage / pageslength );
-        pagebuttons.each(function(i){
-            var p = (num * pageslength) + 1; // important!
-            $(pagebuttons[i]).text( p + i );
-        });
-
-        pagebuttons.removeClass("btn-primary");
-        var currentButton = pagebuttons.get( currentindex );
-        $(currentButton).addClass("btn-primary");
-
-        $(materialCounter).find("#count").text(max);
-
-        if ( max == 0 ) {  // => (skip = 0) 
-            $(materialCounter).find("#from").text("0"); 
-        } else if ( skip == max ) {
-            $(materialCounter).find("#from").text(skip);
-        } else {
-            $(materialCounter).find("#from").text(skip + 1);
-        }
-
-        if ( skip + limit > max ) {
-            $(materialCounter).find("#upto").text( max );
-        } else {
-            $(materialCounter).find("#upto").text(skip + limit);
-        }
-
-        debugMode && console.log({"max":max, "skip":skip});
-
-    });
 
     droplistChanged.add(function(){
 
@@ -639,18 +582,77 @@
             skip -= limit;
         }
 
+
         droplistChanged.dispatch();
     });
 
-    $(materialPager).find(".get-next-btn").on("click", function(){
+    $(materialPager).find(".get-next-btn").on("click", async function(){
 
-        if ( skip + limit > max ) {
+        var selectors = { 
+            "meta.slot": slotDroplist.value,
+            "meta.gender": genderDroplist.value,
+        };
+
+    //  Count max.
+
+        var max = skip;
+        await collection.find(selectors)
+            .skip(skip).forEach(function(){
+            ++max;
+        });
+
+        debugMode && console.log("max:", max);
+
+    //  Define skip.
+
+        if ( skip == max ) {
+            skip = max;
+        } else if ( skip + limit > max ) {
             skip = limit * parseInt(max / limit);  // limit * lastpage;
         } else {
             skip += limit;
         }
 
-        droplistChanged.dispatch();
+    //  Pager.
+
+        lastpage = parseInt( max / limit );
+        currentpage = parseInt( skip / limit );
+
+        currentindex = parseInt( currentpage % pageslength );
+        debugMode && console.log("currentindex:", currentindex);
+
+        var pagebuttons = $(materialPager).find(".page-btn");
+
+        var num = parseInt( currentpage / pageslength );
+        pagebuttons.each(function(i){
+            var p = (num * pageslength) + 1; // important!
+            $(pagebuttons[i]).text( p + i );
+        });
+
+        pagebuttons.removeClass("btn-primary");
+        var currentButton = pagebuttons.get( currentindex );
+        $(currentButton).addClass("btn-primary");
+
+        $(materialCounter).find("#count").text(max);
+
+        if ( max == 0 ) {  // => (skip = 0) 
+            $(materialCounter).find("#from").text("0"); 
+        } else if ( skip == max ) {
+            $(materialCounter).find("#from").text(skip);
+        } else {
+            $(materialCounter).find("#from").text(skip + 1);
+        }
+
+        if ( skip + limit > max ) {
+            $(materialCounter).find("#upto").text( max );
+        } else {
+            $(materialCounter).find("#upto").text(skip + limit);
+        }
+
+        debugMode && console.log({"max":max, "skip":skip});
+
+    //  droplistChanged.dispatch();
+
     });
 
 
