@@ -534,7 +534,7 @@
 
 
     function get_items(){
-/*
+
         collection.find(selectors).skip(skip)
             .limit(limit).toArray(function(err){
             if (err) throw err;
@@ -552,7 +552,7 @@
                 $(element).on("click", function(){
                     $(".material-item").removeClass("selected");
                     $(element).addClass("selected");
-                    clearTimeout(this.interval);
+                    clearTimeout(element.interval);
                     element.interval = setTimeout( function(){
                         materialSelected.dispatch(json);
                     }, 250 );
@@ -565,7 +565,7 @@
         }).catch(function(err){
             console.error(err);
         });
-*/
+
     }
 
 
@@ -602,34 +602,28 @@
             var currentButton = pagebuttons.get(0);
             $(currentButton).addClass("btn-primary");
 
-        //  from.
-            if ( max == 0 ) {
+            if ( max == 0 )
                 $(counter).find("#from").text("0"); 
-            } else {
+            else
                 $(counter).find("#from").text("1");
-            }
 
-        //  to.
-            if ( max == 0 ) {
+
+            if ( max == 0 )
                 $(counter).find("#upto").text("0"); 
-            } else if ( skip + limit > max ) {
+            else if ( skip + limit > max )
                 $(counter).find("#upto").text( max );
-            } else {
+            else
                 $(counter).find("#upto").text(skip + limit);
-            }
 
-        //  of.
+
             $(counter).find("#count").text(max);
-
-            if ( max && skip < max ) {
-                clearTimeout(interval);
-                interval = setTimeout(get_items, 250);
-            }
 
             debugMode && console.log({
                 "max":max, "skip":skip, 
                 "index": currentindex,
             });
+
+            if ( max && skip < max ) get_items():
 
         });
 
@@ -666,7 +660,6 @@
         var currentButton = pagebuttons.get( currentindex );
         $(currentButton).addClass("btn-primary");
 
-    //  from.
         if ( max == 0 )
             $(counter).find("#from").text("0"); 
         else if ( skip == max )
@@ -674,7 +667,6 @@
         else
             $(counter).find("#from").text(skip + 1);
 
-    //  to.
         if ( max == 0 )
             $(counter).find("#upto").text("0");
         else if ( skip + limit > max )
@@ -682,18 +674,17 @@
         else
             $(counter).find("#upto").text(skip + limit);
 
-    //  of.
         $(counter).find("#count").text(max);
-
-        if ( max && skip < max ) {
-            clearTimeout(interval);
-            interval = setTimeout(get_items, 250);
-        }
 
         debugMode && console.log({
             "max":max, "skip":skip, 
             "index": currentindex,
         });
+
+        clearTimeout(interval);
+        if ( max && skip < max ) {
+            interval = setTimeout(get_items, 250);
+        }
 
     });
 
@@ -729,12 +720,10 @@
 
     $(pageSelector).on("click", function(){
 
-        if ( max < 1 ) return;
-        if ( this.skip > max ) return;
-        if ( this.skip == max ) return;
-
-        skip = this.skip;
-        pagerClicked.dispatch();
+        if ( max && this.skip < max ) {
+            skip = this.skip;
+            pagerClicked.dispatch();
+        }
 
     });
 
