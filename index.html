@@ -604,7 +604,7 @@
     //  to item.
         if ( max == 0 ) {
             $(counter).find("#upto").text("0");
-        if ( skip + limit > max ) {
+        } else if ( skip + limit > max ) {
             $(counter).find("#upto").text( max );
         } else {
             $(counter).find("#upto").text(skip + limit);
