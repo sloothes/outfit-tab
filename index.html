@@ -532,47 +532,42 @@
 
     });
 
-/*
+
     function get_items(){
-
-        clearTimeout(interval);
-        interval = setTimeout(function(){
-
-            collection.find(selectors).skip(skip)
+/*
+        collection.find(selectors).skip(skip)
             .limit(limit).toArray(function(err){
-                if (err) throw err;
-            }).then(function(docs){
+            if (err) throw err;
+        }).then(function(docs){
 
-                $(displayObjects).children().remove();
-                debugMode && console.log({"docs":docs});
+            $(displayObjects).children().remove();
+            debugMode && console.log({"docs":docs});
 
-                docs.forEach(function(json){
+            docs.forEach(function(json){
 
-                    var element = document.createElement("div");
-                    element.innerText = element.title = json.name;
-                    element.id = json._id; element.classList.add("material-item");
+                var element = document.createElement("div");
+                element.innerText = element.title = json.name;
+                element.id = json._id; element.classList.add("material-item");
 
-                    $(element).on("click", function(){
-                        $(".material-item").removeClass("selected");
-                        $(element).addClass("selected");
-                        clearTimeout(this.interval);
-                        element.interval = setTimeout( function(){
-                            materialSelected.dispatch(json);
-                        }, 250 );
-                    });
-
-                    $(displayObjects).append( element );
-
+                $(element).on("click", function(){
+                    $(".material-item").removeClass("selected");
+                    $(element).addClass("selected");
+                    clearTimeout(this.interval);
+                    element.interval = setTimeout( function(){
+                        materialSelected.dispatch(json);
+                    }, 250 );
                 });
 
-            }).catch(function(err){
-                console.error(err);
+                $(displayObjects).append( element );
+
             });
 
-        }, 250 );
-
-    }
+        }).catch(function(err){
+            console.error(err);
+        });
 */
+    }
+
 
 
     droplistChanged.add(function(){
@@ -607,14 +602,14 @@
             var currentButton = pagebuttons.get(0);
             $(currentButton).addClass("btn-primary");
 
-        //  Set from.
+        //  from.
             if ( max == 0 ) {
                 $(counter).find("#from").text("0"); 
             } else {
                 $(counter).find("#from").text("1");
             }
 
-        //  Set to.
+        //  to.
             if ( max == 0 ) {
                 $(counter).find("#upto").text("0"); 
             } else if ( skip + limit > max ) {
@@ -623,10 +618,13 @@
                 $(counter).find("#upto").text(skip + limit);
             }
 
-        //  Set of.
+        //  of.
             $(counter).find("#count").text(max);
 
-        //  if ( max > 0 ) get_items();
+            if ( max && skip < max ) {
+                clearTimeout(interval);
+                interval = setTimeout(get_items, 250);
+            }
 
             debugMode && console.log({
                 "max":max, "skip":skip, 
@@ -668,7 +666,7 @@
         var currentButton = pagebuttons.get( currentindex );
         $(currentButton).addClass("btn-primary");
 
-    //  Set from.
+    //  from.
         if ( max == 0 )
             $(counter).find("#from").text("0"); 
         else if ( skip == max )
@@ -676,7 +674,7 @@
         else
             $(counter).find("#from").text(skip + 1);
 
-    //  Set to.
+    //  to.
         if ( max == 0 )
             $(counter).find("#upto").text("0");
         else if ( skip + limit > max )
@@ -684,10 +682,13 @@
         else
             $(counter).find("#upto").text(skip + limit);
 
-    //  Set of.
+    //  of.
         $(counter).find("#count").text(max);
 
-    //  if ( max > 0 ) get_items();
+        if ( max && skip < max ) {
+            clearTimeout(interval);
+            interval = setTimeout(get_items, 250);
+        }
 
         debugMode && console.log({
             "max":max, "skip":skip, 
@@ -749,8 +750,8 @@
 
     $(lastPageBtn).on("click", function(){
 
-        clearTimeout(interval);
-        interval = setTimeout(function(){
+        clearTimeout(this.interval);
+        this.interval = setTimeout(function(){
 
             count().then(function(k){
 
