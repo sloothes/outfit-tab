@@ -694,19 +694,29 @@
 
     $(pager).find(".last-page-btn").on("click", function(){
 
-    //  count().then(function(k){
+        count().then(function(k){
 
         //  Set max.
 
-        //  max = k;  //  debugMode && console.log("max:", max);
+            max = k;  //  debugMode && console.log("max:", max);
 
-        //  Set skip.
+        //  Set skip. 
+            
+            lastpage = parseInt(max / limit);
 
-        skip = limit * parseInt(max / limit); //  lastpage = parseInt(max / limit);
+            if ( limit * lastpage < max ) {
 
-        pagerClicked.dispatch();
+                skip = limit * lastpage;          //  limit * parseInt(max / limit);
 
-    //  });
+             } else {
+
+                skip = limit * ( lastpage - 1 );  //  limit * ( parseInt(max / limit) - 1 );
+
+             }
+
+            pagerClicked.dispatch();
+
+        });
 
     });
 
@@ -733,30 +743,19 @@
 
     $(pager).find(".get-next-btn").on("click", async function(){
 
-    //  count().then(function(k){
+    //  lastpage = parseInt(max / limit);
 
-        //  Set max.
-
-        //  max = k;  //  debugMode && console.log("max:", max);
-
-        //  Set skip.
-
-        if ( skip + limit > max ) {
-
-            skip = limit * parseInt(max / limit);  // limit * lastpage;
-
-        } else if ( skip + limit == max ) {
-
-            skip = limit * parseInt(max / limit);  // limit * lastpage;
-
-        } else {
+        if ( skip + limit < max )
 
             skip += limit;
-        }
+
+        else if ( skip + limit > max )
+            
+            skip = limit * parseInt(max / limit);  //  skip = limit * lastpage;
+
+    //  else if ( skip + limit == max ) skip;
 
         pagerClicked.dispatch();
-
-    //  });
 
     });
 
