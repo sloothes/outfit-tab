@@ -227,8 +227,8 @@
     }
 
     #documents-display {
+        height:170px;
         overflow:auto;
-        max-height:260px;
         background:none;
         border-radius:8px;
     }
@@ -607,13 +607,13 @@
             $(currentButton).addClass("btn-primary");
 
             if ( max == 0 )
-                $(counter).find("#from").text("0"); 
+                $(counter).find("#from").text("-"); 
             else
                 $(counter).find("#from").text("1");
 
 
             if ( max == 0 )
-                $(counter).find("#upto").text("0"); 
+                $(counter).find("#upto").text("-"); 
             else if ( skip + limit > max )
                 $(counter).find("#upto").text( max );
             else
@@ -665,14 +665,14 @@
         $(currentButton).addClass("btn-primary");
 
         if ( max == 0 )
-            $(counter).find("#from").text("0"); 
+            $(counter).find("#from").text("-"); 
         else if ( skip == max )
             $(counter).find("#from").text(skip);
         else
             $(counter).find("#from").text(skip + 1);
 
         if ( max == 0 )
-            $(counter).find("#upto").text("0");
+            $(counter).find("#upto").text("-");
         else if ( skip + limit > max )
             $(counter).find("#upto").text( max );
         else
