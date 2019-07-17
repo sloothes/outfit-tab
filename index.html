@@ -626,7 +626,7 @@
         //  Set of.
             $(counter).find("#count").text(max);
 
-        //  get_items();
+        //  if ( max > 0 ) get_items();
 
             debugMode && console.log({
                 "max":max, "skip":skip, 
@@ -687,7 +687,7 @@
     //  Set of.
         $(counter).find("#count").text(max);
 
-    //  get_items();
+    //  if ( max > 0 ) get_items();
 
         debugMode && console.log({
             "max":max, "skip":skip, 
@@ -729,6 +729,8 @@
     $(pageSelector).on("click", function(){
 
         if ( max < 1 ) return;
+        if ( this.skip > max ) return;
+
         skip = this.skip;
         pagerClicked.dispatch();
 
