@@ -580,6 +580,11 @@
         //  Set of.
             $(counter).find("#count").text(max);
 
+            debugMode && console.log({
+                "max":max, "skip":skip, 
+                "index": currentindex,
+            });
+
         });
 
     });
@@ -725,35 +730,40 @@
 
     $(lastPageBtn).on("click", function(){
 
-        count().then(function(k){
+        clearTimeout(interval);
+        interval = setTimeout(function(){
 
-        //  Set max.
+            count().then(function(k){
 
-            max = k;
+            //  Set max.
 
-            if ( max > 0 ) {
+                max = k;
 
-                var lastpage = parseInt(max / limit);
+                if ( max > 0 ) {
 
-                if ( limit * lastpage < max ) {
+                    var lastpage = parseInt(max / limit);
 
-                    skip = limit * lastpage;          //  limit * parseInt(max / limit);
+                    if ( limit * lastpage < max ) {
 
-                 } else {
+                        skip = limit * lastpage;          //  limit * parseInt(max / limit);
 
-                    skip = limit * ( lastpage - 1 );  //  limit * ( parseInt(max / limit) - 1 );
+                     } else {
 
-                 }
+                        skip = limit * ( lastpage - 1 );  //  limit * ( parseInt(max / limit) - 1 );
 
-            } else {
+                     }
 
-                skip = 0;
+                } else {
 
-            }
+                    skip = 0;
 
-            pagerClicked.dispatch();
+                }
 
-        });
+                pagerClicked.dispatch();
+
+            });
+
+        }, 250 );
 
     });
 
