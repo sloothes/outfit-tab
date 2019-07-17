@@ -836,7 +836,7 @@
 
         else if ( skip + offset > max )
 
-            skip = limit * lastpage;  //  skip = limit * parseInt(max / limit);
+            skip = limit * ( lastpage - 1 );  //  limit * ( parseInt(max / limit) - 1 );
 
     //  else if ( skip + offset == max ) skip;
 
