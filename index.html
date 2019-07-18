@@ -248,7 +248,7 @@
     <h4 style="margin-bottom:30px;">
         <span style="vertical-align:-0.5rem;">Select gender:</span>
         <div style="display:inline-block;width:50%;float:right;">
-            <select id="gender-droplist" class="form-control gender-droplist" readOnly>
+            <select id="gender-droplist" class="form-control outfit-material-droplist" readOnly>
                 <option value="">Select sex:</option>
                 <option value="male">male</option>
                 <option value="female">female</option>
@@ -264,7 +264,7 @@
         <h4 style="margin-bottom:30px;">
             <span style="vertical-align:-0.5rem;">Select outfit slot:</span>
             <div style="display:inline-block;width:50%;float:right;">
-                <select id="outfit-slot-droplist" class="form-control" readOnly>
+                <select id="outfit-slot-droplist" class="form-control outfit-material-droplist" readOnly>
                     <option value="">Select slot:</option>
                     <option value="body">body</option>
                     <option value="eyes">eyes</option>
@@ -464,9 +464,11 @@
     const outfitDroplist = $(outfitMaterialPanel).find("#outfit-slot-droplist").get(0);
     const displayObjects = $(outfitMaterialPanel).find("#documents-display").get(0);
 
+    const materialDroplistSelector = "#outfit-material-panel .outfit-material-droplist";
 
 //  Pager.
 
+    var count;     // (promise) //
     var interval;
     var selectors;
 
@@ -505,7 +507,9 @@
 
     }
 
+/*
     async function count(){
+    //  Too slooooow!
         var k = skip;
         await collection.find(selectors)
         .skip(skip).forEach(function(){
@@ -513,6 +517,7 @@
         });
         return k;
     }
+*/
 
 //  Signals.
 
@@ -556,7 +561,7 @@
 
     }
 
-
+/*
     droplistChanged.add(function(){
 
         selectors = { 
@@ -566,52 +571,64 @@
 
         debugMode && console.log(selectors);
 
-        count().then(function(k){
+    // "count" is a promise returned from ".toArray".
+    //  Use "count.valueOf().length" to count items.
 
-        //  Set max.
-            max = k;  //  debugMode && console.log("max:", max);
+        count = collection.find(selectors).skip(skip).toArray();
 
-        //  Get last page.
-            lastpage = parseInt( max / limit );
+    });
+*/
 
-        //  Set current page.
-            currentpage = 1;  
-            currentindex = 0;
+    droplistChanged.add(function(){
 
-        //  Page buttons numbering.
-            pagebuttons.each(function(i){
-                pagebuttons[i].skip = limit * i;
-                $(pagebuttons[i]).text( i + 1 );
-            });
+    //  count().then(function(k){
 
-        //  Current button setup.
-            pagebuttons.removeClass("btn-primary");
-            var currentButton = pagebuttons.get(0);
-            $(currentButton).addClass("btn-primary");
+    //  Set max.
+        max = count.valueOf().length;  //  max = k;
+        debugMode && console.log("max:", max);
 
-            if ( max == 0 )
-                $(counter).find("#from").text("-"); 
-            else
-                $(counter).find("#from").text("1");
+    //  Get last page.
+        lastpage = parseInt( max / limit );
 
+    //  Set current page.
+        currentpage = 1;  
+        currentindex = 0;
 
-            if ( max == 0 )
-                $(counter).find("#upto").text("-"); 
-            else if ( skip + limit > max )
-                $(counter).find("#upto").text( max );
-            else
-                $(counter).find("#upto").text(skip + limit);
-
-            $(counter).find("#count").text(max);
-
-            debugMode && console.log({
-                "max":max, "skip":skip, 
-                "index": currentindex,
-            });
-
-            if ( max && skip < max ) get_items();
-
+    //  Page buttons numbering.
+        pagebuttons.each(function(i){
+            pagebuttons[i].skip = limit * i;
+            $(pagebuttons[i]).text( i + 1 );
         });
+
+    //  Current button setup.
+        pagebuttons.removeClass("btn-primary");
+        var currentButton = pagebuttons.get(0);
+        $(currentButton).addClass("btn-primary");
+
+    //  Display info.
+
+        if ( max == 0 )
+            $(counter).find("#from").text("-"); 
+        else
+            $(counter).find("#from").text("1");
+
+        if ( max == 0 )
+            $(counter).find("#upto").text("-"); 
+        else if ( skip + limit > max )
+            $(counter).find("#upto").text( max );
+        else
+            $(counter).find("#upto").text(skip + limit);
+
+        $(counter).find("#count").text(max);
+
+        debugMode && console.log({
+            "max":max, "skip":skip, 
+            "index": currentindex,
+        });
+
+        if ( max && skip < max ) get_items();
+
+    //  });
 
     });
 
@@ -650,6 +667,8 @@
         var currentButton = pagebuttons.get( currentindex );
         $(currentButton).addClass("btn-primary");
 
+    //  Display info.
+
         if ( max == 0 )
             $(counter).find("#from").text("-"); 
         else if ( skip == max )
@@ -673,7 +692,9 @@
 
         clearTimeout(interval);
         if ( max && skip < max ) {
-            interval = setTimeout(get_items, 250);
+            interval = setTimeout(function(){
+                get_items();
+            }, 250);
         }
 
     });
@@ -698,7 +719,8 @@
 
 //  Droplists.
 
-    $(outfitDroplist).on("change", function(){
+/*
+    $(genderDroplist).on("change", function(){
 
         init();
         reset();
@@ -708,10 +730,32 @@
         droplistChanged.dispatch();
     });
 
-    $(genderDroplist).on("change", function(){
+    $(outfitDroplist).on("change", function(){
 
         init();
         reset();
+
+        $(displayObjects).children().remove();
+
+        droplistChanged.dispatch();
+    });
+*/
+
+    $(materialDroplistSelector).on("change", function(){
+
+        init();
+        reset();
+
+        selectors = { 
+            "meta.slot"  : outfitDroplist.value,
+            "meta.gender": genderDroplist.value,
+        };
+
+        debugMode && console.log(selectors);
+
+        // "count" is a promise returned from ".toArray".
+        //  Use "count.valueOf().length" to count items.
+        count = collection.find(selectors).skip(skip).toArray();
 
         $(displayObjects).children().remove();
 
