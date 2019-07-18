@@ -245,10 +245,10 @@
 </div>
 
 <div id="outfit-gender-panel" class="helpers-header gender-header">
-    <h4 style="margin-bottom:30px;">
+    <h4 style="height:35px;margin-bottom:20px;">
         <span style="vertical-align:-0.5rem;">Select gender:</span>
         <div style="display:inline-block;width:50%;float:right;">
-            <select id="gender-droplist" class="form-control outfit-material-droplist" readOnly>
+            <select id="gender-droplist" class="form-control costumize-outfit-droplist" readOnly>
                 <option value="">Select sex:</option>
                 <option value="male">male</option>
                 <option value="female">female</option>
@@ -261,10 +261,10 @@
 <div id="outfit-material-panel" class="tab-content">
 
     <div>
-        <h4 style="margin-bottom:30px;">
+        <h4 style="height:35px;margin-bottom:20px;">
             <span style="vertical-align:-0.5rem;">Select outfit slot:</span>
             <div style="display:inline-block;width:50%;float:right;">
-                <select id="outfit-slot-droplist" class="form-control outfit-material-droplist" readOnly>
+                <select id="outfit-slot-droplist" class="form-control costumize-outfit-droplist" readOnly>
                     <option value="">Select slot:</option>
                     <option value="body">body</option>
                     <option value="eyes">eyes</option>
@@ -459,6 +459,8 @@
     const outfitGenderPanel = document.getElementById("outfit-gender-panel");
     const outfitMaterialPanel = document.getElementById("outfit-material-panel");
 
+    const materialDroplistSelector = ".costumize-outfit-droplist";
+
     const counter        = $(materialItems).find("#counter").get(0);
     const genderDroplist = $(outfitGenderPanel).find("#gender-droplist").get(0);
     const outfitDroplist = $(outfitMaterialPanel).find("#outfit-slot-droplist").get(0);
@@ -466,10 +468,10 @@
 
 //  Pager.
 
-    var count;       //  resolved promise.
+//  var count;
     var timeout;
     var msec = 200;
-//  var selectors;
+    var selectors;
 
     var max = 0;
     var skip = 0;
@@ -477,19 +479,10 @@
     var currentpage = 0;
     var currentindex = 0;
     var pagebuttons = $(pager).find(".page-btn");
+    var count = collection.find({"dummy":"selector"}).toArray();  //  resolved promise.
 
     const limit = 5;
     const pageslength = $(materialItems).find(".page-btn").length;
-
-    var selectors = ObservableSlim.create({
-        "meta.slot"  : outfitDroplist.value,
-        "meta.gender": genderDroplist.value,
-    }, false, function(changes) {
-        debugMode && console.log({"changes":changes});
-        count = collection.find(selectors).skip(skip).toArray();
-    });
-
-    count = collection.find(selectors).skip(skip).toArray();
 
     function reset(){
 
@@ -586,8 +579,6 @@
 
     droplistChanged.add(function(){
 
-    //  count().then(function(k){
-
     //  Set max.
         max = count.valueOf().length;  //  max = k;
         debugMode && console.log("max:", max);
@@ -633,15 +624,13 @@
 
         if ( max && skip < max ) get_items();
 
-    //  });
-
     });
 
     pagerClicked.add(function(){
 
-    //  debugMode && console.log(selectors);
         if ( !genderDroplist.value ) return;
         if ( !outfitDroplist.value ) return;
+    //  debugMode && console.log(selectors);
 
     //  Get last page.
         lastpage = parseInt( max / limit );
@@ -718,8 +707,6 @@
 
 
 //  Droplists.
-
-    const materialDroplistSelector = "#outfit-material-panel .outfit-material-droplist";
 
     $(materialDroplistSelector).on("change", function(){
 
