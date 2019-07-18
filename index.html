@@ -336,7 +336,8 @@
 
     genderChanged.add(function(value){
 
-        var data = "/gender/" + value;  // important!
+        var data = "/gender/" + value;
+
         $(outfitHelpersTabSelector).removeClass("in active");
 
         if ( window.socket ) {
@@ -365,11 +366,12 @@
 
         }
 
+        if ( value ) store( "Sex", data );
+
     });
 
     $(genderDroplist).on("change", function(){
         genderChanged.dispatch( this.value );
-        if (this.value) store( "Sex", "/gender/" + this.value );
     });
 
 })();
@@ -453,6 +455,8 @@
     const collection = db.collection("materials");
     debugMode && console.log({"collection":collection});
 
+//  Pager.
+
     const viewer = document.getElementById("viewer");
     const pager  = document.getElementById("material-pager");
     const materialItems = document.getElementById("material-items");
@@ -465,8 +469,6 @@
     const genderDroplist = $(outfitGenderPanel).find("#gender-droplist").get(0);
     const outfitDroplist = $(outfitMaterialPanel).find("#outfit-slot-droplist").get(0);
     const displayObjects = $(outfitMaterialPanel).find("#documents-display").get(0);
-
-//  Pager.
 
 //  var count;
     var timeout;
@@ -512,13 +514,6 @@
 
     }
 
-//  Signals.
-
-    var Signal = signals.Signal;
-    var pagerClicked = new Signal();
-    var droplistChanged = new Signal();
-    var materialSelected = new Signal();
-
     function get_items(){
 
         clearTimeout(timeout);
@@ -558,6 +553,13 @@
         }, msec);
 
     }
+
+//  Signals.
+
+    var Signal = signals.Signal;
+    var pagerClicked = new Signal();
+    var droplistChanged = new Signal();
+    var materialSelected = new Signal();
 
 /*
     droplistChanged.add(function(){
@@ -720,14 +722,13 @@
 
         debugMode && console.log(selectors);
 
-    // "count" is a promise returned from ".toArray".
     //  Use "count.valueOf().length" to count items.
-    //  count = collection.find(selectors).skip(skip).toArray(); //  uses "observable-slim.js"
+        count = collection.find(selectors).skip(skip).toArray();
+    // "count" is a resolved promise returned from ".toArray()".
 
         droplistChanged.dispatch();
 
     });
-
 
 
 
@@ -745,12 +746,14 @@
 //  For performance we count items only when we ask last page 
 //  or we change droplist selectors. Not need to count on backward.
 //  Also we count periodcally every (1) minute.
-//  "count" is a resolved promise returned from ".find().toArray".
-//  Use "count.valueOf().length" to get count of items.
 
     var intervalCountID = setInterval(function(){
+        debugMode && console.log(selectors);
+
+    //  Use "count.valueOf().length" to get count of items.
         count = collection.find(selectors).skip(skip).toArray();
-        debugMode && console.log("intervalCountID:", intervalCountID);
+    // "count" is a resolved promise returned from ".find().toArray()".
+
     }, 60000);
 
 //  Page button.
