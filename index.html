@@ -325,7 +325,7 @@
 
     const viewer = document.getElementById("viewer");
     const outfitGenderPanel = document.getElementById("outfit-gender-panel");
-    const droplist = $(outfitGenderPanel).find("#gender-droplist").get(0);
+    const genderDroplist = $(outfitGenderPanel).find("#gender-droplist").get(0);
 
     const outfitHelpersTabSelector = ".outfit-helpers.component-pane.tab-pane";
     const maleOutfitHelpersSelector = "#male-outfit-helpers";
@@ -345,10 +345,10 @@
 
                 if (err) console.error(err);
 
-                if ( data == "/gender/male" ) 
+                if ( value == "male" ) 
                     $(maleOutfitHelpersSelector).addClass("in active");
 
-                if ( data == "/gender/female" )
+                if ( value == "female" )
                     $(femaleOutfitHelpersSelector).addClass("in active");
 
             });
@@ -357,17 +357,17 @@
 
             viewer.contentWindow.localPlayerHandler(data);
 
-            if ( data == "/gender/male" ) 
+            if ( value == "male" ) 
                 $(maleOutfitHelpersSelector).addClass("in active");
 
-            if ( data == "/gender/female" )
+            if ( value == "female" )
                 $(femaleOutfitHelpersSelector).addClass("in active");
 
         }
 
     });
 
-    $(droplist).on("change", function(){
+    $(genderDroplist).on("change", function(){
         genderChanged.dispatch( this.value );
         if (this.value) store( "Sex", "/gender/" + this.value );
     });
@@ -414,7 +414,7 @@
 
     const viewer = document.getElementById("viewer");
     const outfitMaterialPanel = document.getElementById("outfit-material-panel");
-    const slotDroplist = $(outfitMaterialPanel).find("select#outfit-slot-droplist").get(0);
+    const outfitDroplist = $(outfitMaterialPanel).find("select#outfit-slot-droplist").get(0);
 
     var Signal = signals.Signal;
     var outfitSlotChanged = new Signal();
@@ -424,7 +424,7 @@
         viewer.contentWindow.localPlayerHandler(data);
     });
 
-    $(slotDroplist).on("change", function(){
+    $(outfitDroplist).on("change", function(){
         outfitSlotChanged.dispatch(this.value);
     });
 
