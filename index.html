@@ -723,7 +723,7 @@
         debugMode && console.log(selectors);
 
     //  Use "count.valueOf().length" to count items.
-        count = collection.find(selectors).skip(skip).toArray();
+    //  count = collection.find(selectors).skip(skip).toArray();
     // "count" is a resolved promise returned from ".toArray()".
 
         droplistChanged.dispatch();
@@ -742,14 +742,12 @@
     const prevGroupBtn = $(pager).find(".get-prev-group-btn").get(0);
     const nextGroupBtn = $(pager).find(".get-next-group-btn").get(0);
 
-
 //  For performance we count items only when we ask last page 
 //  or we change droplist selectors. Not need to count on backward.
 //  Also we count periodcally every (1) minute.
 
     var intervalCountID = setInterval(function(){
         debugMode && console.log(selectors);
-
     //  Use "count.valueOf().length" to get count of items.
         count = collection.find(selectors).skip(skip).toArray();
     // "count" is a resolved promise returned from ".find().toArray()".
@@ -780,7 +778,7 @@
 
     $(lastPageBtn).on("click", function(){
 
-        count = collection.find(selectors).skip(skip).toArray();
+    //  count = collection.find(selectors).skip(skip).toArray();
 
         clearTimeout(this.interval);
         this.interval = setTimeout(function(){
