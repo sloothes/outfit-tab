@@ -481,11 +481,28 @@
     const pageslength = $(materialItems).find(".page-btn").length;
 
     function reset(){
+
         max = 0;
         skip = 0;
         lastpage = 0;
         currentpage = 0;
         currentindex = 0;
+
+    }
+
+    function init(){
+
+    //  Page buttons numbering.
+        pagebuttons.each(function(i){
+            pagebuttons[i].skip = limit * i;
+            $(pagebuttons[i]).text( i + 1 );
+        });
+
+    //  Current button setup.
+        pagebuttons.removeClass("btn-primary");
+        var currentButton = pagebuttons.get(0);
+        $(currentButton).addClass("btn-primary");
+
     }
 
     async function count(){
@@ -542,8 +559,6 @@
 
     droplistChanged.add(function(){
 
-        $(displayObjects).children().remove();
-
         selectors = { 
             "meta.slot"  : outfitDroplist.value,
             "meta.gender": genderDroplist.value,
@@ -587,7 +602,6 @@
             else
                 $(counter).find("#upto").text(skip + limit);
 
-
             $(counter).find("#count").text(max);
 
             debugMode && console.log({
@@ -603,9 +617,9 @@
 
     pagerClicked.add(function(){
 
+    //  debugMode && console.log(selectors);
         if ( !genderDroplist.value ) return;
         if ( !outfitDroplist.value ) return;
-        debugMode && console.log(selectors);
 
     //  Get last page.
         lastpage = parseInt( max / limit );
@@ -685,12 +699,22 @@
 //  Droplists.
 
     $(outfitDroplist).on("change", function(){
-        reset(); 
+
+        init();
+        reset();
+
+        $(displayObjects).children().remove();
+
         droplistChanged.dispatch();
     });
 
     $(genderDroplist).on("change", function(){
+
+        init();
         reset();
+
+        $(displayObjects).children().remove();
+
         droplistChanged.dispatch();
     });
 
@@ -865,22 +889,6 @@
         pagerClicked.dispatch();
 
     });
-
-
-    (function init(){
-
-    //  Page buttons numbering.
-        pagebuttons.each(function(i){
-            pagebuttons[i].skip = limit * i;
-            $(pagebuttons[i]).text( i + 1 );
-        });
-
-    //  Current button setup.
-        pagebuttons.removeClass("btn-primary");
-        var currentButton = pagebuttons.get(0);
-        $(currentButton).addClass("btn-primary");
-
-    })();
 
 })();
 
