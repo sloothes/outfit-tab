@@ -455,7 +455,9 @@
     const collection = db.collection("materials");
     debugMode && console.log({"collection":collection});
 
+
 //  Pager.
+
 
     const viewer = document.getElementById("viewer");
     const pager  = document.getElementById("material-pager");
@@ -470,21 +472,22 @@
     const outfitDroplist = $(outfitMaterialPanel).find("#outfit-slot-droplist").get(0);
     const displayObjects = $(outfitMaterialPanel).find("#documents-display").get(0);
 
-//  var count;
     var timeout;
-    var msec = 200;
+    var interval;
     var selectors;
+    var msec = 200;
+
+    const limit = 5;
 
     var max = 0;
     var skip = 0;
     var lastpage = 0;
     var currentpage = 0;
     var currentindex = 0;
-    var pagebuttons = $(pager).find(".page-btn");
-    var count = collection.find({"dummy":"selector"}).toArray();  //  resolved promise.
 
-    const limit = 5;
-    const pageslength = $(materialItems).find(".page-btn").length;
+    var pagebuttons = $(pager).find(".page-btn");
+    var pageslength = $(pager).find(".page-btn").length;
+
 
     function reset(){
 
@@ -512,6 +515,15 @@
     //  Clear listed objects.
         $(displayObjects).children().remove();
 
+    }
+
+    async function count(){
+        var k = skip;
+        await collection.find(selectors)
+        .skip(skip).forEach(function(){
+            ++k;
+        });
+        return k;
     }
 
     function get_items(){
@@ -561,7 +573,6 @@
     var droplistChanged = new Signal();
     var materialSelected = new Signal();
 
-/*
     droplistChanged.add(function(){
 
         selectors = { 
@@ -571,60 +582,58 @@
 
         debugMode && console.log(selectors);
 
-    // "count" is a promise returned from ".toArray".
-    //  Use "count.valueOf().length" to count items.
-
-        count = collection.find(selectors).skip(skip).toArray();
-
     });
-*/
 
     droplistChanged.add(function(){
 
-    //  Set max.
-        max = count.valueOf().length;  //  max = k;
-        debugMode && console.log("max:", max);
+        count().then(function(k){
+            debugMode && console.log("count:", k);
 
-    //  Get last page.
-        lastpage = parseInt( max / limit );
+        //  Set max.
+            max = k;
 
-    //  Set current page.
-        currentpage = 1;  
-        currentindex = 0;
+        //  Get last page.
+            lastpage = parseInt( max / limit );
 
-    //  Page buttons numbering.
-        pagebuttons.each(function(i){
-            pagebuttons[i].skip = limit * i;
-            $(pagebuttons[i]).text( i + 1 );
+        //  Set current page.
+            currentpage = 1;  
+            currentindex = 0;
+
+        //  Page buttons numbering.
+            pagebuttons.each(function(i){
+                pagebuttons[i].skip = limit * i;
+                $(pagebuttons[i]).text( i + 1 );
+            });
+
+        //  Current button setup.
+            pagebuttons.removeClass("btn-primary");
+            var currentButton = pagebuttons.get(0);
+            $(currentButton).addClass("btn-primary");
+
+        //  Display info.
+
+            if ( max == 0 )
+                $(counter).find("#from").text("-"); 
+            else
+                $(counter).find("#from").text("1");
+
+            if ( max == 0 )
+                $(counter).find("#upto").text("-"); 
+            else if ( skip + limit > max )
+                $(counter).find("#upto").text( max );
+            else
+                $(counter).find("#upto").text(skip + limit);
+
+            $(counter).find("#count").text(max);
+
+            debugMode && console.log({
+                "max":max, "skip":skip, 
+                "index": currentindex,
+            });
+
+            if ( max && skip < max ) get_items();
+
         });
-
-    //  Current button setup.
-        pagebuttons.removeClass("btn-primary");
-        var currentButton = pagebuttons.get(0);
-        $(currentButton).addClass("btn-primary");
-
-    //  Display info.
-
-        if ( max == 0 )
-            $(counter).find("#from").text("-"); 
-        else
-            $(counter).find("#from").text("1");
-
-        if ( max == 0 )
-            $(counter).find("#upto").text("-"); 
-        else if ( skip + limit > max )
-            $(counter).find("#upto").text( max );
-        else
-            $(counter).find("#upto").text(skip + limit);
-
-        $(counter).find("#count").text(max);
-
-        debugMode && console.log({
-            "max":max, "skip":skip, 
-            "index": currentindex,
-        });
-
-        if ( max && skip < max ) get_items();
 
     });
 
@@ -714,18 +723,6 @@
 
         init();
         reset();
-
-        selectors = { 
-            "meta.slot"  : outfitDroplist.value,
-            "meta.gender": genderDroplist.value,
-        };
-
-        debugMode && console.log(selectors);
-
-    //  Use "count.valueOf().length" to count items.
-    //  count = collection.find(selectors).skip(skip).toArray();
-    // "count" is a resolved promise returned from ".toArray()".
-
         droplistChanged.dispatch();
 
     });
@@ -744,15 +741,9 @@
 
 //  For performance we count items only when we ask last page 
 //  or we change droplist selectors. Not need to count on backward.
-//  Also we count periodcally every (1) minute.
 
-    var intervalCountID = setInterval(function(){
-        debugMode && console.log(selectors);
-    //  Use "count.valueOf().length" to get count of items.
-        count = collection.find(selectors).skip(skip).toArray();
-    // "count" is a resolved promise returned from ".find().toArray()".
 
-    }, 60000);
+
 
 //  Page button.
 
@@ -778,37 +769,36 @@
 
     $(lastPageBtn).on("click", function(){
 
-    //  count = collection.find(selectors).skip(skip).toArray();
-
         clearTimeout(this.interval);
         this.interval = setTimeout(function(){
 
-       //  Set max.
+            count().then(function(k){
 
-            max = count.valueOf().length; // max = k;
+                max = k;
 
-            if ( max && max > 0 ) {
+                if ( max && max > 0 ) {
 
-                var lastpage = parseInt(max / limit);
+                    var lastpage = parseInt(max / limit);
 
-                if ( limit * lastpage < max ) {
+                    if ( limit * lastpage < max ) {
 
-                    skip = limit * lastpage;          //  limit * parseInt(max / limit);
+                        skip = limit * lastpage;          //  limit * parseInt(max / limit);
+
+                    } else {
+
+                        skip = limit * ( lastpage - 1 );  //  limit * ( parseInt(max / limit) - 1 );
+
+                    }
 
                 } else {
 
-                    skip = limit * ( lastpage - 1 );  //  limit * ( parseInt(max / limit) - 1 );
+                    skip = 0;
 
                 }
 
-            } else {
+                pagerClicked.dispatch();
 
-                skip = 0;
-
-            }
-
-            pagerClicked.dispatch();
-
+            });
 
         }, 250 );
 
@@ -926,7 +916,6 @@
 
 /*
     async function count(){
-    //  Too slooooow!
         var k = skip;
         await collection.find(selectors)
         .skip(skip).forEach(function(){
@@ -934,6 +923,23 @@
         });
         return k;
     }
+*/
+
+/*
+    function count(){
+
+        var k = skip;
+
+        var cursor = collection.find(selectors).skip(skip);
+        cursor.on("data", function(){ ++k; });
+        cursor.on("end", function(){ 
+            max = k;
+            console.log("count:", k); 
+        });
+        cursor.toArray();
+
+    }
+
 */
 
 /*
