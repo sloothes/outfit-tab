@@ -752,10 +752,10 @@
         };
 
         debugMode && console.log(selectors);
+        count = collection.find(selectors).skip(skip).toArray();
 
         // "count" is a promise returned from ".toArray".
         //  Use "count.valueOf().length" to count items.
-        count = collection.find(selectors).skip(skip).toArray();
 
         $(displayObjects).children().remove();
 
@@ -800,38 +800,37 @@
 
     $(lastPageBtn).on("click", function(){
 
+        count = collection.find(selectors).skip(skip).toArray();
+
         clearTimeout(this.interval);
         this.interval = setTimeout(function(){
 
-            count().then(function(k){
+       //  Set max.
 
-            //  Set max.
+            max = count.valueOf().length();
 
-                max = k;
+            if ( max > 0 ) {
 
-                if ( max > 0 ) {
+                var lastpage = parseInt(max / limit);
 
-                    var lastpage = parseInt(max / limit);
+                if ( limit * lastpage < max ) {
 
-                    if ( limit * lastpage < max ) {
-
-                        skip = limit * lastpage;          //  limit * parseInt(max / limit);
-
-                     } else {
-
-                        skip = limit * ( lastpage - 1 );  //  limit * ( parseInt(max / limit) - 1 );
-
-                     }
+                    skip = limit * lastpage;          //  limit * parseInt(max / limit);
 
                 } else {
 
-                    skip = 0;
+                    skip = limit * ( lastpage - 1 );  //  limit * ( parseInt(max / limit) - 1 );
 
                 }
 
-                pagerClicked.dispatch();
+            } else {
 
-            });
+                skip = 0;
+
+            }
+
+            pagerClicked.dispatch();
+
 
         }, 250 );
 
