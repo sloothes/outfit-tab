@@ -480,21 +480,6 @@
     const limit = 5;
     const pageslength = $(materialItems).find(".page-btn").length;
 
-    (function(){
-
-    //  Page buttons numbering.
-        pagebuttons.each(function(i){
-            pagebuttons[i].skip = limit * i;
-            $(pagebuttons[i]).text( i + 1 );
-        });
-
-    //  Current button setup.
-        pagebuttons.removeClass("btn-primary");
-        var currentButton = pagebuttons.get(0);
-        $(currentButton).addClass("btn-primary");
-
-    })();
-
     function reset(){
         max = 0;
         skip = 0;
@@ -519,26 +504,10 @@
     var droplistChanged = new Signal();
     var materialSelected = new Signal();
 
-    materialSelected.add(function(json){
-
-        var data = {};
-        data.slot = json.meta.slot;
-        data.gender = json.meta.gender;
-        data.material = json;
-
-        if ( window.socket ) {
-            socket.publish(localPlayerMaterialChannel, data); // TODO.
-        } else {
-            viewer.contentWindow.localPlayerApplyMaterial(data);
-        }
-
-    });
-
-
     function get_items(){
 
         collection.find(selectors).skip(skip)
-            .limit(limit).toArray(function(err){
+        .limit(limit).toArray(function(err){
             if (err) throw err;
         }).then(function(docs){
 
@@ -569,7 +538,6 @@
         });
 
     }
-
 
 
     droplistChanged.add(function(){
@@ -635,6 +603,8 @@
 
     pagerClicked.add(function(){
 
+        if ( !genderDroplist.value ) return;
+        if ( !outfitDroplist.value ) return;
         debugMode && console.log(selectors);
 
     //  Get last page.
@@ -690,6 +660,22 @@
         clearTimeout(interval);
         if ( max && skip < max ) {
             interval = setTimeout(get_items, 250);
+        }
+
+    });
+
+
+    materialSelected.add(function(json){
+
+        var data = {};
+        data.slot = json.meta.slot;
+        data.gender = json.meta.gender;
+        data.material = json;
+
+        if ( window.socket ) {
+            socket.publish(localPlayerMaterialChannel, data); // TODO.
+        } else {
+            viewer.contentWindow.localPlayerApplyMaterial(data);
         }
 
     });
@@ -880,6 +866,21 @@
 
     });
 
+
+    (function init(){
+
+    //  Page buttons numbering.
+        pagebuttons.each(function(i){
+            pagebuttons[i].skip = limit * i;
+            $(pagebuttons[i]).text( i + 1 );
+        });
+
+    //  Current button setup.
+        pagebuttons.removeClass("btn-primary");
+        var currentButton = pagebuttons.get(0);
+        $(currentButton).addClass("btn-primary");
+
+    })();
 
 })();
 
