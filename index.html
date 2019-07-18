@@ -768,6 +768,7 @@
     $(lastPageBtn).on("click", function(){
 
         count().then(function(k){
+            debugMode && console.log("count:", k);
 
             max = k;
 
