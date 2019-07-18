@@ -464,13 +464,12 @@
     const outfitDroplist = $(outfitMaterialPanel).find("#outfit-slot-droplist").get(0);
     const displayObjects = $(outfitMaterialPanel).find("#documents-display").get(0);
 
-    const materialDroplistSelector = "#outfit-material-panel .outfit-material-droplist";
-
 //  Pager.
 
-    var count;     // (promise) //
-    var interval;
-    var selectors;
+    var count;       //  resolved promise.
+    var timeout;
+    var msec = 200;
+//  var selectors;
 
     var max = 0;
     var skip = 0;
@@ -481,6 +480,11 @@
 
     const limit = 5;
     const pageslength = $(materialItems).find(".page-btn").length;
+
+    var selectors = ObservableSlim.create({}, false, function(changes) {
+        debugMode && console.log({"changes":changes});
+        count = collection.find(selectors).skip(skip).toArray();
+    });
 
     function reset(){
 
@@ -505,19 +509,10 @@
         var currentButton = pagebuttons.get(0);
         $(currentButton).addClass("btn-primary");
 
-    }
+    //  Clear listed objects.
+        $(displayObjects).children().remove();
 
-/*
-    async function count(){
-    //  Too slooooow!
-        var k = skip;
-        await collection.find(selectors)
-        .skip(skip).forEach(function(){
-            ++k;
-        });
-        return k;
     }
-*/
 
 //  Signals.
 
@@ -528,36 +523,41 @@
 
     function get_items(){
 
-        collection.find(selectors).skip(skip)
-        .limit(limit).toArray(function(err){
-            if (err) throw err;
-        }).then(function(docs){
+        clearTimeout(timeout);
+        timeout = setTimeout(function(){
 
-            $(displayObjects).children().remove();
-            debugMode && console.log({"docs":docs});
+            collection.find(selectors).skip(skip)
+            .limit(limit).toArray(function(err){
+                if (err) throw err;
+            }).then(function(docs){
 
-            docs.forEach(function(json){
+                $(displayObjects).children().remove();
+                debugMode && console.log({"docs":docs});
 
-                var element = document.createElement("div");
-                element.innerText = element.title = json.name;
-                element.id = json._id; element.classList.add("material-item");
+                docs.forEach(function(json){
 
-                $(element).on("click", function(){
-                    $(".material-item").removeClass("selected");
-                    $(element).addClass("selected");
-                    clearTimeout(element.interval);
-                    element.interval = setTimeout( function(){
-                        materialSelected.dispatch(json);
-                    }, 250 );
+                    var element = document.createElement("div");
+                    element.innerText = element.title = json.name;
+                    element.id = json._id; element.classList.add("material-item");
+
+                    $(element).on("click", function(){
+                        $(".material-item").removeClass("selected");
+                        $(element).addClass("selected");
+                        clearTimeout(element.interval);
+                        element.interval = setTimeout( function(){
+                            materialSelected.dispatch(json);
+                        }, 250 );
+                    });
+
+                    $(displayObjects).append( element );
+
                 });
 
-                $(displayObjects).append( element );
-
+            }).catch(function(err){
+                console.error(err);
             });
 
-        }).catch(function(err){
-            console.error(err);
-        });
+        }, msec);
 
     }
 
@@ -648,6 +648,7 @@
         currentindex = parseInt( currentpage % pageslength );
 
     //  Page buttons numbering.
+        var num = parseInt( currentpage / pageslength ) * pageslength;
 
         //  var num = parseInt( currentpage / pageslength );
         //  pagebuttons.each(function(i){
@@ -655,7 +656,6 @@
         //      $(pagebuttons[i]).text( p + i );
         //  });
 
-        var num = parseInt( currentpage / pageslength ) * pageslength;
         pagebuttons.each(function(i){
             var page = num + i;
             pagebuttons[i].skip = limit * page; // important!
@@ -690,12 +690,7 @@
             "index": currentindex,
         });
 
-        clearTimeout(interval);
-        if ( max && skip < max ) {
-            interval = setTimeout(function(){
-                get_items();
-            }, 250);
-        }
+        if ( max && skip < max ) get_items();
 
     });
 
@@ -719,27 +714,7 @@
 
 //  Droplists.
 
-/*
-    $(genderDroplist).on("change", function(){
-
-        init();
-        reset();
-
-        $(displayObjects).children().remove();
-
-        droplistChanged.dispatch();
-    });
-
-    $(outfitDroplist).on("change", function(){
-
-        init();
-        reset();
-
-        $(displayObjects).children().remove();
-
-        droplistChanged.dispatch();
-    });
-*/
+    const materialDroplistSelector = "#outfit-material-panel .outfit-material-droplist";
 
     $(materialDroplistSelector).on("change", function(){
 
@@ -752,21 +727,19 @@
         };
 
         debugMode && console.log(selectors);
-        count = collection.find(selectors).skip(skip).toArray();
 
-        // "count" is a promise returned from ".toArray".
-        //  Use "count.valueOf().length" to count items.
-
-        $(displayObjects).children().remove();
+    // "count" is a promise returned from ".toArray".
+    //  Use "count.valueOf().length" to count items.
+    //  count = collection.find(selectors).skip(skip).toArray(); //  uses "observable-slim.js"
 
         droplistChanged.dispatch();
+
     });
 
 
-//  Pager.
 
-//  For performance we count items only when we ask last page 
-//  or we change droplist selectors. Not need to count on backward.
+
+//  Pager.
 
     const pageSelector = "#material-pager .page-btn";
     const firstPageBtn = $(pager).find(".first-page-btn").get(0);
@@ -775,6 +748,18 @@
     const nextPageBtn  = $(pager).find(".get-next-btn").get(0);
     const prevGroupBtn = $(pager).find(".get-prev-group-btn").get(0);
     const nextGroupBtn = $(pager).find(".get-next-group-btn").get(0);
+
+
+//  For performance we count items only when we ask last page 
+//  or we change droplist selectors. Not need to count on backward.
+//  Also we count periodcally every (1) minute.
+//  "count" is a resolved promise returned from ".find().toArray".
+//  Use "count.valueOf().length" to get count of items.
+
+    var intervalCountID = setInterval(function(){
+        count = collection.find(selectors).skip(skip).toArray();
+        debugMode && console.log("intervalCountID:", intervalCountID);
+    }, 60000);
 
 //  Page button.
 
@@ -807,9 +792,9 @@
 
        //  Set max.
 
-            max = count.valueOf().length();
+            max = count.valueOf().length(); // max = k;
 
-            if ( max > 0 ) {
+            if ( max && max > 0 ) {
 
                 var lastpage = parseInt(max / limit);
 
@@ -945,6 +930,40 @@
 
 
 <script>
+
+/*
+    async function count(){
+    //  Too slooooow!
+        var k = skip;
+        await collection.find(selectors)
+        .skip(skip).forEach(function(){
+            ++k;
+        });
+        return k;
+    }
+*/
+
+/*
+    $(genderDroplist).on("change", function(){
+
+        init();
+        reset();
+
+        $(displayObjects).children().remove();
+
+        droplistChanged.dispatch();
+    });
+
+    $(outfitDroplist).on("change", function(){
+
+        init();
+        reset();
+
+        $(displayObjects).children().remove();
+
+        droplistChanged.dispatch();
+    });
+*/
 
 /*
     var selectors = { 
