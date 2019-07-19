@@ -752,13 +752,8 @@
 
     $(firstPageBtn).on("click", function(){
 
-        clearTimeout( this.interval );
-        this.interval = setTimeout(function(){
-
             skip = 0;
             pagerClicked.dispatch();
-
-        }, msec);
 
     });
 
@@ -766,37 +761,33 @@
 
     $(lastPageBtn).on("click", function(){
 
-        clearTimeout( this.interval );
-        this.interval = setTimeout(function(){
-
         //  count().then(function(k){
         //      max = k;
 
-            if ( max && max > 0 ) {
+        if ( max && max > 0 ) {
 
-                var lastpage = parseInt(max / limit);
+            var lastpage = parseInt(max / limit);
 
-                if ( limit * lastpage < max ) {
+            if ( limit * lastpage < max ) {
 
-                    skip = limit * lastpage;          //  limit * parseInt(max / limit);
-
-                } else {
-
-                    skip = limit * ( lastpage - 1 );  //  limit * ( parseInt(max / limit) - 1 );
-
-                }
+                skip = limit * lastpage;          //  limit * parseInt(max / limit);
 
             } else {
 
-                skip = 0;
+                skip = limit * ( lastpage - 1 );  //  limit * ( parseInt(max / limit) - 1 );
 
             }
 
-            pagerClicked.dispatch();
+        } else {
+
+            skip = 0;
+
+        }
+
+        pagerClicked.dispatch();
 
         //  });
 
-        }, msec);
 
     });
 
@@ -813,10 +804,7 @@
             skip -= limit;
         }
 
-        clearTimeout( this.interval );
-        this.interval = setTimeout(function(){
-            pagerClicked.dispatch();
-        }, msec);
+        pagerClicked.dispatch();
 
     });
 
@@ -836,10 +824,7 @@
 
     //  else if ( skip + limit == max ) skip;
 
-        clearTimeout( this.interval );
-        this.interval = setTimeout(function(){
-            pagerClicked.dispatch();
-        }, msec);
+        pagerClicked.dispatch();
 
     });
 
@@ -858,10 +843,7 @@
             skip -= offset;
         }
 
-        clearTimeout( this.interval );
-        this.interval = setTimeout(function(){
-            pagerClicked.dispatch();
-        }, msec);
+        pagerClicked.dispatch();
 
     });
 
@@ -902,10 +884,7 @@
 
         }
 
-        clearTimeout( this.interval );
-        this.interval = setTimeout(function(){
-            pagerClicked.dispatch();
-        }, msec);
+        pagerClicked.dispatch();
 
     });
 
