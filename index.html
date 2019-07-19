@@ -522,7 +522,7 @@
         var k = skip;
         await collection.find(selectors)
         .skip(skip).forEach(function(){
-            ++k;
+            ++k; debugMode && console.log("k:", k);
         });
         return k;
     }
