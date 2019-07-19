@@ -518,6 +518,7 @@
     }
 
     async function count(){
+    //  too slow!
         var k = skip;
         await collection.find(selectors)
         .skip(skip).forEach(function(){
@@ -581,10 +582,6 @@
         };
 
         debugMode && console.log(selectors);
-
-    });
-
-    droplistChanged.add(function(){
 
         count().then(function(k){
             debugMode && console.log("count:", k);
@@ -742,7 +739,6 @@
 //  For performance we count items only when we ask last page 
 //  or we change droplist selectors. Not need to count on backward.
 
-
 //  Page button.
 
     $(pageSelector).on("click", function(){
@@ -767,10 +763,11 @@
 
     $(lastPageBtn).on("click", function(){
 
-        count().then(function(k){
-            debugMode && console.log("count:", k);
+        clearTimeout( this.interval );
+        this.interval = setTimeout(function(){
 
-            max = k;
+        //  count().then(function(k){
+        //      max = k;
 
             if ( max && max > 0 ) {
 
@@ -794,7 +791,9 @@
 
             pagerClicked.dispatch();
 
-        });
+        //  });
+
+        }, msec);
 
     });
 
