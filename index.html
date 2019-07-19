@@ -478,7 +478,7 @@
     var timeout;
     var interval;
     var selectors;
-    var msec = 200;
+    var msec = 100;
 
     const limit = 5;
 
@@ -555,7 +555,7 @@
                         clearTimeout(element.interval);
                         element.interval = setTimeout( function(){
                             materialSelected.dispatch(json);
-                        }, 250 );
+                        }, msec );
                     });
 
                     $(displayObjects).append( element );
