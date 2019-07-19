@@ -478,7 +478,7 @@
     var timeout;
     var interval;
     var selectors;
-    var msec = 100;
+    var msec = 200;
 
     const limit = 5;
 
@@ -532,41 +532,36 @@
 
     function get_items(){
 
-        clearTimeout(timeout);
-        timeout = setTimeout(function(){
-
-            collection.find(selectors).skip(skip)
+        collection.find(selectors).skip(skip)
             .limit(limit).toArray(function(err){
-                if (err) throw err;
-            }).then(function(docs){
+            if (err) throw err;
+        }).then(function(docs){
 
-                $(displayObjects).children().remove();
-                debugMode && console.log({"docs":docs});
+            $(displayObjects).children().remove();
+            debugMode && console.log({"docs":docs});
 
-                docs.forEach(function(json){
+            docs.forEach(function(json){
 
-                    var element = document.createElement("div");
-                    element.innerText = element.title = json.name;
-                    element.id = json._id; element.classList.add("material-item");
+                var element = document.createElement("div");
+                element.innerText = element.title = json.name;
+                element.id = json._id; element.classList.add("material-item");
 
-                    $(element).on("click", function(){
+                $(element).on("click", function(){
+                    clearTimeout(this.interval);
+                    this.interval = setTimeout( function(){
                         $(".material-item").removeClass("selected");
                         $(element).addClass("selected");
-                        clearTimeout(element.interval);
-                        element.interval = setTimeout( function(){
-                            materialSelected.dispatch(json);
-                        }, msec );
-                    });
-
-                    $(displayObjects).append( element );
-
+                        materialSelected.dispatch(json);
+                    }, msec );
                 });
 
-            }).catch(function(err){
-                console.error(err);
+                $(displayObjects).append( element );
+
             });
 
-        }, msec);
+        }).catch(function(err){
+            console.error(err);
+        });
 
     }
 
@@ -757,8 +752,13 @@
 
     $(firstPageBtn).on("click", function(){
 
-        skip = 0;
-        pagerClicked.dispatch();
+        clearTimeout( this.interval );
+        this.interval = setTimeout(function(){
+
+            skip = 0;
+            pagerClicked.dispatch();
+
+        }, msec);
 
     });
 
@@ -813,7 +813,10 @@
             skip -= limit;
         }
 
-        pagerClicked.dispatch();
+        clearTimeout( this.interval );
+        this.interval = setTimeout(function(){
+            pagerClicked.dispatch();
+        }, msec);
 
     });
 
@@ -833,7 +836,10 @@
 
     //  else if ( skip + limit == max ) skip;
 
-        pagerClicked.dispatch();
+        clearTimeout( this.interval );
+        this.interval = setTimeout(function(){
+            pagerClicked.dispatch();
+        }, msec);
 
     });
 
@@ -852,7 +858,10 @@
             skip -= offset;
         }
 
-        pagerClicked.dispatch();
+        clearTimeout( this.interval );
+        this.interval = setTimeout(function(){
+            pagerClicked.dispatch();
+        }, msec);
 
     });
 
@@ -893,7 +902,10 @@
 
         }
 
-        pagerClicked.dispatch();
+        clearTimeout( this.interval );
+        this.interval = setTimeout(function(){
+            pagerClicked.dispatch();
+        }, msec);
 
     });
 
