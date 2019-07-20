@@ -491,6 +491,12 @@
     var pagebuttons = $(pager).find(".page-btn");
     var pageslength = $(pager).find(".page-btn").length;
 
+//  Signals.
+
+    var Signal = signals.Signal;
+    var pagerClicked = new Signal();
+    var droplistChanged = new Signal();
+    var materialSelected = new Signal();
 
     function reset(){
 
@@ -565,12 +571,6 @@
 
     }
 
-//  Signals.
-
-    var Signal = signals.Signal;
-    var pagerClicked = new Signal();
-    var droplistChanged = new Signal();
-    var materialSelected = new Signal();
 
     droplistChanged.add(function(){
 
