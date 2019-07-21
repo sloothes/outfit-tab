@@ -441,11 +441,14 @@
 //  Collection.
 
     const NAME = "USER";
-    const VERSION = 2;
+    const VERSION = 3;
 
     const db = new zango.Db( NAME, VERSION, {
         materials:  true,
     });
+
+    const collection = db.collection("materials");
+    debugMode && console.log({"collection":collection});
 
     db.open(function(err, database){
         if (err) console.error(err);
@@ -454,9 +457,6 @@
     }).catch(function(err){
         console.error(err);
     });
-
-    const collection = db.collection("materials");
-    debugMode && console.log({"collection":collection});
 
 
 //  Pager.
