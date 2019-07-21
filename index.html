@@ -444,7 +444,11 @@
     const VERSION = 3;
 
     const db = new zango.Db( NAME, VERSION, {
+        animations: true,
+        outfits:    true,
         materials:  true,
+        textures:   true,
+        products:   true,
     });
 
     const collection = db.collection("materials");
