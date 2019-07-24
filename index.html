@@ -452,8 +452,6 @@
         products:   true,
     });
 
-    var collection = db.collection("materials");
-    debugMode && console.log({"collection":collection});
 
     db.open(function(err, database){
         if (err) console.error(err);
@@ -466,6 +464,8 @@
 
 //  Pager.
 
+    const collection = db.collection("materials");
+    debugMode && console.log({"collection":collection});
 
     const viewer = document.getElementById("viewer");
     const pager  = document.getElementById("material-pager");
