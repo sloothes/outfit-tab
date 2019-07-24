@@ -443,7 +443,7 @@
     const NAME = "USER";
     const VERSION = 3;
 
-    const db = new zango.Db( NAME, VERSION, {
+    var db = new zango.Db( NAME, VERSION, {
         animations: true,
         outfits:    true,
         materials:  true,
@@ -451,7 +451,7 @@
         products:   true,
     });
 
-    const collection = db.collection("materials");
+    var collection = db.collection("materials");
     debugMode && console.log({"collection":collection});
 
     db.open(function(err, database){
