@@ -605,54 +605,60 @@
 //  Page button.
 
     $(pageSelector).on("click", function(){
-
-        if ( max && this.skip < max ) {
-            skip = this.skip;
-        }
-
         clearTimeout(this.interval);
-        this.interval = setTimeout( pagerClicked, 200 );
+        this.interval = setTimeout( function(){
+
+            if ( max && this.skip < max ) {
+                skip = this.skip;
+            }
+
+
+        }, 200 );
 
     });
 
 //  First page.
 
     $(firstPageBtn).on("click", function(){
-
-        skip = 0;
-
         clearTimeout(this.interval);
-        this.interval = setTimeout( pagerClicked, 200 );
+        this.interval = setTimeout( function(){
+
+            skip = 0;
+            pagerClicked();
+
+        }, 200 );
 
     });
 
 //  Last page.
 
     $(lastPageBtn).on("click", function(){
+        clearTimeout(this.interval);
+        this.interval = setTimeout( function(){
 
+            if ( max && max > 0 ) {
 
-        if ( max && max > 0 ) {
+                var lastpage = parseInt(max / limit);
 
-            var lastpage = parseInt(max / limit);
+                if ( limit * lastpage < max ) {
 
-            if ( limit * lastpage < max ) {
+                    skip = limit * lastpage;          //  limit * parseInt(max / limit);
 
-                skip = limit * lastpage;          //  limit * parseInt(max / limit);
+                } else {
+
+                    skip = limit * ( lastpage - 1 );  //  limit * ( parseInt(max / limit) - 1 );
+
+                }
 
             } else {
 
-                skip = limit * ( lastpage - 1 );  //  limit * ( parseInt(max / limit) - 1 );
+                skip = 0;
 
             }
 
-        } else {
+            pagerClicked();
 
-            skip = 0;
-
-        }
-
-        clearTimeout(this.interval);
-        this.interval = setTimeout( pagerClicked, 200 );
+        }, 200 );
 
     });
 
@@ -669,8 +675,7 @@
             skip -= limit;
         }
 
-        clearTimeout(this.interval);
-        this.interval = setTimeout( pagerClicked, 200 );
+        pagerClicked();
 
     });
 
@@ -690,8 +695,7 @@
 
     //  else if ( skip + limit == max ) skip;
 
-        clearTimeout(this.interval);
-        this.interval = setTimeout( pagerClicked, 200 );
+        pagerClicked();
 
     });
 
@@ -710,8 +714,7 @@
             skip -= offset;
         }
 
-        clearTimeout(this.interval);
-        this.interval = setTimeout( pagerClicked, 200 );
+        pagerClicked();
 
     });
 
@@ -752,8 +755,7 @@
 
         }
 
-        clearTimeout(this.interval);
-        this.interval = setTimeout( pagerClicked, 200 );
+        pagerClicked();
 
     });
 
