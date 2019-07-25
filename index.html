@@ -401,7 +401,38 @@
 
         debugMode && console.log(selectors);
 
-        get_items();
+    //  get_items();
+
+        collection.find(selectors).skip(skip)
+            .limit(limit).toArray(function(err){
+            if (err) throw err;
+        }).then(function(docs){
+
+            $(displayObjects).children().remove();
+            debugMode && console.log({"docs":docs});
+
+            docs.forEach(function(json){
+
+                var element = document.createElement("div");
+                element.innerText = element.title = json.name;
+                element.id = json._id; element.classList.add("material-item");
+
+                $(element).on("click", function(){
+                    clearTimeout(this.interval);
+                    this.interval = setTimeout( function(){
+                        $(".material-item").removeClass("selected");
+                        $(element).addClass("selected");
+                        materialSelected.dispatch(json);
+                    }, msec );
+                });
+
+                $(displayObjects).append( element );
+
+            });
+
+        }).catch(function(err){
+            console.error(err);
+        });
         
         count().then(function(k){
             debugMode && console.log("count:", k);
