@@ -432,11 +432,21 @@
 
         }).catch(function(err){
             console.error(err);
-        });
+        }).then(async function(){
 
-    //  count.
+        //  count.
 
-        count().then(function(k){
+            var k = skip;
+
+            await collection.find(selectors)
+            .skip(skip).forEach(function(){
+                ++k; debugMode && console.log("k:", k);
+            });
+
+            return k;
+
+        }).then(function(k){
+
             debugMode && console.log("count:", k);
 
         //  Set max.
