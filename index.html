@@ -314,8 +314,8 @@
 //  Signals.
 
     var Signal = signals.Signal;
-    var pagerClicked = new Signal();
-    var droplistChanged = new Signal();
+//  var pagerClicked = new Signal();
+//  var droplistChanged = new Signal();
     var materialSelected = new Signal();
 
     function reset(){
@@ -392,7 +392,7 @@
     }
 
 
-    droplistChanged.add(function(){
+    function droplistChanged(){
 
         selectors = { 
             "meta.slot"  : outfitDroplist.value,
@@ -497,7 +497,7 @@
 
     });
 
-    pagerClicked.add(function(){
+    function pagerClicked(){
 
         if ( !genderDroplist.value ) return;
         if ( !outfitDroplist.value ) return;
@@ -583,7 +583,7 @@
 
         init();
         reset();
-        droplistChanged.dispatch();
+        droplistChanged();
 
     });
 
@@ -608,8 +608,10 @@
 
         if ( max && this.skip < max ) {
             skip = this.skip;
-            pagerClicked.dispatch();
         }
+
+        clearTimeout(this.interval);
+        this.interval = setTimeout( pagerClicked, 200 );
 
     });
 
@@ -618,7 +620,9 @@
     $(firstPageBtn).on("click", function(){
 
         skip = 0;
-        pagerClicked.dispatch();
+
+        clearTimeout(this.interval);
+        this.interval = setTimeout( pagerClicked, 200 );
 
     });
 
@@ -626,8 +630,6 @@
 
     $(lastPageBtn).on("click", function(){
 
-        //  count().then(function(k){
-        //      max = k;
 
         if ( max && max > 0 ) {
 
@@ -649,10 +651,8 @@
 
         }
 
-        pagerClicked.dispatch();
-
-        //  });
-
+        clearTimeout(this.interval);
+        this.interval = setTimeout( pagerClicked, 200 );
 
     });
 
@@ -669,7 +669,8 @@
             skip -= limit;
         }
 
-        pagerClicked.dispatch();
+        clearTimeout(this.interval);
+        this.interval = setTimeout( pagerClicked, 200 );
 
     });
 
@@ -689,7 +690,8 @@
 
     //  else if ( skip + limit == max ) skip;
 
-        pagerClicked.dispatch();
+        clearTimeout(this.interval);
+        this.interval = setTimeout( pagerClicked, 200 );
 
     });
 
@@ -708,7 +710,8 @@
             skip -= offset;
         }
 
-        pagerClicked.dispatch();
+        clearTimeout(this.interval);
+        this.interval = setTimeout( pagerClicked, 200 );
 
     });
 
@@ -749,7 +752,8 @@
 
         }
 
-        pagerClicked.dispatch();
+        clearTimeout(this.interval);
+        this.interval = setTimeout( pagerClicked, 200 );
 
     });
 
