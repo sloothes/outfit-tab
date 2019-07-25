@@ -555,7 +555,10 @@
             "index": currentindex,
         });
 
-        if ( max && skip < max ) get_items();
+        if ( max && skip < max ) {
+            clearTimeout(interval);
+            interval = setTimeout( get_items, 200 );
+        }
 
     }
 
@@ -605,61 +608,48 @@
 //  Page button.
 
     $(pageSelector).on("click", function(){
-        clearTimeout(this.interval);
-        this.interval = setTimeout( function(){
 
-            if ( max && this.skip < max ) {
-                skip = this.skip;
-            }
-
+        if ( max && this.skip < max ) {
+            skip = this.skip;
             pagerClicked();
-
-        }, 200 );
+        }
 
     });
 
 //  First page.
 
     $(firstPageBtn).on("click", function(){
-        clearTimeout(this.interval);
-        this.interval = setTimeout( function(){
 
-            skip = 0;
-            pagerClicked();
-
-        }, 200 );
+        skip = 0;
+        pagerClicked();
 
     });
 
 //  Last page.
 
     $(lastPageBtn).on("click", function(){
-        clearTimeout(this.interval);
-        this.interval = setTimeout( function(){
 
-            if ( max && max > 0 ) {
+        if ( max && max > 0 ) {
 
-                var lastpage = parseInt(max / limit);
+            var lastpage = parseInt(max / limit);
 
-                if ( limit * lastpage < max ) {
+            if ( limit * lastpage < max ) {
 
-                    skip = limit * lastpage;          //  limit * parseInt(max / limit);
-
-                } else {
-
-                    skip = limit * ( lastpage - 1 );  //  limit * ( parseInt(max / limit) - 1 );
-
-                }
+                skip = limit * lastpage;          //  limit * parseInt(max / limit);
 
             } else {
 
-                skip = 0;
+                skip = limit * ( lastpage - 1 );  //  limit * ( parseInt(max / limit) - 1 );
 
             }
 
-            pagerClicked();
+        } else {
 
-        }, 200 );
+            skip = 0;
+
+        }
+
+        pagerClicked();
 
     });
 
@@ -676,10 +666,7 @@
             skip -= limit;
         }
 
-        clearTimeout(this.interval);
-        this.interval = setTimeout( function(){
-            pagerClicked();
-        }, 200 );
+        pagerClicked();
 
     });
 
@@ -699,10 +686,7 @@
 
     //  else if ( skip + limit == max ) skip;
 
-        clearTimeout(this.interval);
-        this.interval = setTimeout( function(){
-            pagerClicked();
-        }, 200 );
+        pagerClicked();
 
     });
 
@@ -721,10 +705,7 @@
             skip -= offset;
         }
 
-        clearTimeout(this.interval);
-        this.interval = setTimeout( function(){
-            pagerClicked();
-        }, 200 );
+        pagerClicked();
 
     });
 
@@ -765,10 +746,7 @@
 
         }
 
-        clearTimeout(this.interval);
-        this.interval = setTimeout( function(){
-            pagerClicked();
-        }, 200 );
+        pagerClicked();
 
     });
 
