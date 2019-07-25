@@ -401,7 +401,7 @@
 
         debugMode && console.log(selectors);
 
-    //  get_items();
+    //  get items.
 
         collection.find(selectors).skip(skip)
             .limit(limit).toArray(function(err){
@@ -433,7 +433,9 @@
         }).catch(function(err){
             console.error(err);
         });
-        
+
+    //  count.
+
         count().then(function(k){
             debugMode && console.log("count:", k);
 
