@@ -3,7 +3,7 @@
 (function(){
     var component_ID = {
         type: "tab",
-        version: "3.1",
+        version: "3.2",
         kind: "component",
         name: "outfits-tab.html",
         description: "costumizes outfit of local player.",
@@ -401,6 +401,8 @@
 
         debugMode && console.log(selectors);
 
+        get_items();
+        
         count().then(function(k){
             debugMode && console.log("count:", k);
 
@@ -446,7 +448,7 @@
                 "index": currentindex,
             });
 
-            if ( max && skip < max ) get_items();
+        //  if ( max && skip < max ) get_items();
 
         });
 
