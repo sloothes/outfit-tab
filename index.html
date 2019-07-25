@@ -676,7 +676,10 @@
             skip -= limit;
         }
 
-        pagerClicked();
+        clearTimeout(this.interval);
+        this.interval = setTimeout( function(){
+            pagerClicked();
+        }, 200 );
 
     });
 
@@ -696,7 +699,10 @@
 
     //  else if ( skip + limit == max ) skip;
 
-        pagerClicked();
+        clearTimeout(this.interval);
+        this.interval = setTimeout( function(){
+            pagerClicked();
+        }, 200 );
 
     });
 
@@ -715,7 +721,10 @@
             skip -= offset;
         }
 
-        pagerClicked();
+        clearTimeout(this.interval);
+        this.interval = setTimeout( function(){
+            pagerClicked();
+        }, 200 );
 
     });
 
@@ -756,7 +765,10 @@
 
         }
 
-        pagerClicked();
+        clearTimeout(this.interval);
+        this.interval = setTimeout( function(){
+            pagerClicked();
+        }, 200 );
 
     });
 
