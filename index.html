@@ -293,13 +293,13 @@ $(viewer.contentWindow).on("load", function(){
     const viewer = document.getElementById("viewer");
     const pager  = document.getElementById("material-pager");
     const materialItems = document.getElementById("material-items");
-    const outfitGenderPanel = document.getElementById("outfit-gender-panel");
+    const outfitSelectorPanel = document.getElementById("outfit-gender-panel");
     const outfitMaterialPanel = document.getElementById("outfit-material-panel");
 
     const materialDroplistSelector = ".costumize-outfit-droplist";
 
     const counter        = $(materialItems).find("#counter").get(0);
-    const genderDroplist = $(outfitGenderPanel).find("#outfit-gender-droplist").get(0);
+    const genderDroplist = $(outfitSelectorPanel).find("#outfit-gender-droplist").get(0);
     const outfitDroplist = $(outfitMaterialPanel).find("#outfit-slot-droplist").get(0);
     const displayObjects = $(outfitMaterialPanel).find("#documents-display").get(0);
 
