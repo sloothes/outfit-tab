@@ -64,7 +64,7 @@
     <h4 style="height:35px;margin-bottom:10px;">
         <span style="vertical-align:-0.5rem;">Select gender:</span>
         <div style="display:inline-block;width:40%;float:right;">
-            <select id="gender-droplist" class="form-control costumize-outfit-droplist" readOnly>
+            <select id="outfit-gender-droplist" class="form-control gender-droplist costumize-outfit-droplist" readOnly>
                 <option value="">Select sex:</option>
                 <option value="male">male</option>
                 <option value="female">female</option>
@@ -75,7 +75,7 @@
     <h4 style="height:35px;margin-bottom:10px;">
         <span style="vertical-align:-0.5rem;">Select outfit slot:</span>
         <div style="display:inline-block;width:40%;float:right;">
-            <select id="outfit-slot-droplist" class="form-control costumize-outfit-droplist" readOnly>
+            <select id="outfit-slot-droplist" class="form-control slot-droplist costumize-outfit-droplist" readOnly>
                 <option value="">Select slot:</option>
                 <option value="body">body</option>
                 <option value="eyes">eyes</option>
@@ -140,65 +140,6 @@
 
 (function(){
 
-    const viewer = document.getElementById("viewer");
-    const outfitGenderPanel = document.getElementById("outfit-gender-panel");
-    const genderDroplist = $(outfitGenderPanel).find("#gender-droplist").get(0);
-
-    const outfitHelpersTabSelector = ".outfit-helpers.component-pane.tab-pane";
-    const maleOutfitHelpersSelector = "#male-outfit-helpers";
-    const femaleOutfitHelpersSelector = "#female-outfit-helpers";
-
-    var Signal = signals.Signal;
-    var genderChanged = new Signal();
-
-    genderChanged.add(function(value){
-
-        var data = "/gender/" + value;
-
-        $(outfitHelpersTabSelector).removeClass("in active");
-
-        if ( window.socket ) {
-
-            socket.publish(localPlayerChannel, data, function(err){
-
-                if (err) console.error(err);
-
-                if ( value == "male" ) 
-                    $(maleOutfitHelpersSelector).addClass("in active");
-
-                if ( value == "female" )
-                    $(femaleOutfitHelpersSelector).addClass("in active");
-
-            });
-
-        } else {
-
-            viewer.contentWindow.localPlayerHandler(data);
-
-            if ( value == "male" ) 
-                $(maleOutfitHelpersSelector).addClass("in active");
-
-            if ( value == "female" )
-                $(femaleOutfitHelpersSelector).addClass("in active");
-
-        }
-
-        if ( value ) store( "Sex", data );
-
-    });
-
-    $(genderDroplist).on("change", function(){
-        genderChanged.dispatch( this.value );
-    });
-
-})();
-
-</script>
-
-<script>
-
-(function(){
-
     const helpersHeaderSelector = ".helpers-header";
     const materialHeaderSelector = ".material-header";
     const outfitMaterialPanel = document.getElementById("outfit-material-panel");
@@ -229,25 +170,89 @@
 
 <script>
 
-(function(){
+$(viewer.contentWindow).on("load", function(){
 
-    const viewer = document.getElementById("viewer");
+    var contentWindow = this;
+
+//  const viewer = document.getElementById("viewer");
+    const outfitSelectorPanel = document.getElementById("outfit-gender-panel");
     const outfitMaterialPanel = document.getElementById("outfit-material-panel");
-    const outfitDroplist = $(outfitMaterialPanel).find("select#outfit-slot-droplist").get(0);
+    const genderDroplist = $(outfitSelectorPanel).find("#outfit-gender-droplist").get(0);
+    const outfitDroplist = $(outfitSelectorPanel).find("select#outfit-slot-droplist").get(0);
+
+    const outfitHelpersTabSelector = ".outfit-helpers.component-pane.tab-pane";
+    const maleOutfitHelpersSelector = "#male-outfit-helpers";
+    const femaleOutfitHelpersSelector = "#female-outfit-helpers";
 
     var Signal = signals.Signal;
     var outfitSlotChanged = new Signal();
+    var genderDroplistChanged = new Signal();
 
-    outfitSlotChanged.add(function(value){
-        var data = "/select/" + value;
-        viewer.contentWindow.localPlayerHandler(data);
+    $(genderDroplist).on("change", function(){
+
+        if ( !this.value ) {
+
+        //  Overwrite gender value.
+            this.value = contentWindow.localPlayer.outfit.getGender();
+        }
+
+    //  Null values NOT allowed.
+
+        if ( !this.value ) return;
+
+        genderDroplistChanged.dispatch( this.value );
+    });
+
+    genderDroplistChanged.add(function(value){
+
+    //  Null values NOT allowed.
+
+        if ( !value ) return;
+
+        var data = "/gender/" + value;
+
+        $(outfitHelpersTabSelector).removeClass("in active");
+
+        if ( window.socket ) {
+
+            socket.publish(localPlayerChannel, data, function(err){
+
+                if (err) console.error(err);
+
+                if ( value == "male" ) 
+                    $(maleOutfitHelpersSelector).addClass("in active");
+
+                if ( value == "female" )
+                    $(femaleOutfitHelpersSelector).addClass("in active");
+
+            });
+
+        } else {
+
+            contentWindow.localPlayerHandler(data);
+
+            if ( value == "male" ) 
+                $(maleOutfitHelpersSelector).addClass("in active");
+
+            if ( value == "female" )
+                $(femaleOutfitHelpersSelector).addClass("in active");
+
+        }
+
+        if ( value ) store( "Sex", data );
+
     });
 
     $(outfitDroplist).on("change", function(){
         outfitSlotChanged.dispatch(this.value);
     });
 
-})();
+    outfitSlotChanged.add(function(value){
+        var data = "/select/" + value;
+        contentWindow.localPlayerHandler(data);
+    });
+
+});
 
 </script>
 
@@ -294,7 +299,7 @@
     const materialDroplistSelector = ".costumize-outfit-droplist";
 
     const counter        = $(materialItems).find("#counter").get(0);
-    const genderDroplist = $(outfitGenderPanel).find("#gender-droplist").get(0);
+    const genderDroplist = $(outfitGenderPanel).find("#outfit-gender-droplist").get(0);
     const outfitDroplist = $(outfitMaterialPanel).find("#outfit-slot-droplist").get(0);
     const displayObjects = $(outfitMaterialPanel).find("#documents-display").get(0);
 
