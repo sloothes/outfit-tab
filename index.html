@@ -32,7 +32,7 @@
         background-color:#73b8f3;
     }
 
-    #material-items {
+    #material-items-panel {
         max-width:475px;
         max-height:660px;
         color:#fff;
@@ -96,7 +96,7 @@
 
 <div id="outfit-material-panel" class="tab-content">
 
-    <div id="material-items" class="well">
+    <div id="material-items-panel" class="well">
 
         <hr />
 
@@ -294,16 +294,16 @@ $(viewer.contentWindow).on("load", function(){
 
     const viewer = document.getElementById("viewer");
     const pager  = document.getElementById("material-pager");
-    const materialItems = document.getElementById("material-items");
+    const materialItemsPanel  = document.getElementById("material-items-panel");
     const outfitSelectorPanel = document.getElementById("outfit-gender-panel");
     const outfitMaterialPanel = document.getElementById("outfit-material-panel");
 
     const materialDroplistSelector = ".costumize-outfit-droplist";
 
-    const counter        = $(materialItems).find("#counter").get(0);
-    const genderDroplist = $(outfitSelectorPanel).find("#outfit-gender-droplist").get(0);
-    const outfitDroplist = $(outfitMaterialPanel).find("#outfit-slot-droplist").get(0);
+    const counter        = $(materialItemsPanel).find("#counter").get(0);
     const displayObjects = $(outfitMaterialPanel).find("#documents-display").get(0);
+    const outfitDroplist = $(outfitSelectorPanel).find("#outfit-slot-droplist").get(0);
+    const genderDroplist = $(outfitSelectorPanel).find("#outfit-gender-droplist").get(0);
 
     var timeout;
     var interval;
