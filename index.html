@@ -188,6 +188,15 @@ $(viewer.contentWindow).on("load", function(){
     var outfitSlotChanged = new Signal();
     var genderDroplistChanged = new Signal();
 
+    function setActive(value){
+
+        if ( value == "male" ) 
+            $(maleOutfitHelpersSelector).addClass("in active");
+
+        if ( value == "female" )
+            $(femaleOutfitHelpersSelector).addClass("in active");
+    }
+
     $(genderDroplist).on("change", function(){
 
         if ( !this.value ) {
@@ -219,11 +228,7 @@ $(viewer.contentWindow).on("load", function(){
 
                 if (err) console.error(err);
 
-                if ( value == "male" ) 
-                    $(maleOutfitHelpersSelector).addClass("in active");
-
-                if ( value == "female" )
-                    $(femaleOutfitHelpersSelector).addClass("in active");
+                setActive(value);
 
             });
 
@@ -231,11 +236,7 @@ $(viewer.contentWindow).on("load", function(){
 
             contentWindow.localPlayerHandler(data);
 
-            if ( value == "male" ) 
-                $(maleOutfitHelpersSelector).addClass("in active");
-
-            if ( value == "female" )
-                $(femaleOutfitHelpersSelector).addClass("in active");
+            setActive(value);
 
         }
 
@@ -255,12 +256,21 @@ $(viewer.contentWindow).on("load", function(){
     contentWindow.localPlayer.outfit.changed.add(function(){
 
         var selector = ".gender-droplist";
+        $(outfitHelpersTabSelector).removeClass("in active");
+
         var gender = contentWindow.localPlayer.outfit.getGender();
 
-        if ( !gender ) 
+        if ( !gender ) {
+
             $(selector).val("");
-        else 
+
+        } else {
+
             $(selector).val( gender );
+
+            setActive(gender);
+
+        }
 
         return;
 
