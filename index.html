@@ -101,10 +101,10 @@
         <hr />
 
         <h4>Choose material:
-            <div id="counter" class="pull-right small" style="margin-top:4px;color:#ddd;">
-                <span id="from">zero</span>
-                to <span id="upto">zero</span>
-                of <span id="count">none</span>
+            <div class="counter pull-right small" style="margin-top:4px;color:#ddd;">
+                <span class="from">zero</span>
+                to <span class="upto">zero</span>
+                of <span class="count">none</span>
             </div>
         </h4>
 
@@ -283,7 +283,7 @@ $(viewer.contentWindow).on("load", function(){
 <script>
 
 /*
-//  const VERSION = 5;
+//  const VERSION = 6;
     const NAME = "USER";
 
     var db = new zango.Db( NAME, {
@@ -324,7 +324,7 @@ $(viewer.contentWindow).on("load", function(){
 
     const materialDroplistSelector = ".costumize-outfit-droplist";
 
-    const counter        = $(materialItemsPanel).find("#counter").get(0);
+    const counter        = $(materialItemsPanel).find(".counter").get(0);
     const displayObjects = $(outfitMaterialPanel).find("#documents-display").get(0);
     const outfitDroplist = $(outfitSelectorPanel).find("#outfit-slot-droplist").get(0);
     const genderDroplist = $(outfitSelectorPanel).find("#outfit-gender-droplist").get(0);
@@ -380,14 +380,17 @@ $(viewer.contentWindow).on("load", function(){
 
     }
 
-    async function count(){
-    //  too slow!
+    function count(){
         var k = skip;
-        await collection.find(selectors)
-        .skip(skip).forEach(function(){
-            ++k; debugMode && console.log("k:", k);
+        return collection.find(selectors)
+            .skip(skip).forEach( 
+            function(doc){ ++k; }, 
+            function(err){ if (err) throw err; }
+        ).catch(function(err){
+            console.error(err);
+        }).then(function(){
+            return k;
         });
-        return k;
     }
 
     function get_items(){
@@ -425,7 +428,6 @@ $(viewer.contentWindow).on("load", function(){
 
     }
 
-
     function droplistChanged(){
 
         selectors = { 
@@ -435,15 +437,26 @@ $(viewer.contentWindow).on("load", function(){
 
         debugMode && console.log(selectors);
 
-    //  get items.
+        count().then(function(k){
+            max = k; debugMode && console.log("max:", max);
+        }).then(function(){
+            $(counter).find(".count").text(max);
+        });
+
+    //  get_items();
 
         collection.find(selectors).skip(skip)
-            .limit(limit).toArray(function(err){
+        .limit(limit).toArray(function(err){
             if (err) throw err;
         }).then(function(docs){
 
             $(displayObjects).children().remove();
             debugMode && console.log({"docs":docs});
+
+            if ( docs.length > 0 ) {
+                $(counter).find(".from").text(skip + 1); 
+                $(counter).find(".upto").text(skip + docs.length);
+            }
 
             docs.forEach(function(json){
 
@@ -466,67 +479,6 @@ $(viewer.contentWindow).on("load", function(){
 
         }).catch(function(err){
             console.error(err);
-        }).then(async function(){
-
-        //  count. TODO: REPLACE async/await from behind compitality.
-
-            var k = skip;
-
-            await collection.find(selectors)
-            .skip(skip).forEach(function(){
-                ++k; debugMode && console.log("k:", k);
-            });
-
-            return k;
-
-        }).then(function(k){
-
-            debugMode && console.log("count:", k);
-
-        //  Set max.
-            max = k;
-
-        //  Get last page.
-            lastpage = parseInt( max / limit );
-
-        //  Set current page.
-            currentpage = 1;  
-            currentindex = 0;
-
-        //  Page buttons numbering.
-            pagebuttons.each(function(i){
-                pagebuttons[i].skip = limit * i;
-                $(pagebuttons[i]).text( i + 1 );
-            });
-
-        //  Current button setup.
-            pagebuttons.removeClass("btn-primary");
-            var currentButton = pagebuttons.get(0);
-            $(currentButton).addClass("btn-primary");
-
-        //  Display info.
-
-            if ( max == 0 )
-                $(counter).find("#from").text("-"); 
-            else
-                $(counter).find("#from").text("1");
-
-            if ( max == 0 )
-                $(counter).find("#upto").text("-"); 
-            else if ( skip + limit > max )
-                $(counter).find("#upto").text( max );
-            else
-                $(counter).find("#upto").text(skip + limit);
-
-            $(counter).find("#count").text(max);
-
-            debugMode && console.log({
-                "max":max, "skip":skip, 
-                "index": currentindex,
-            });
-
-        //  if ( max && skip < max ) get_items();
-
         });
 
     }
@@ -569,20 +521,20 @@ $(viewer.contentWindow).on("load", function(){
     //  Display info.
 
         if ( max == 0 )
-            $(counter).find("#from").text("-"); 
+            $(counter).find(".from").text("-"); 
         else if ( skip == max )
-            $(counter).find("#from").text(skip);
+            $(counter).find(".from").text(skip);
         else
-            $(counter).find("#from").text(skip + 1);
+            $(counter).find(".from").text(skip + 1);
 
         if ( max == 0 )
-            $(counter).find("#upto").text("-");
+            $(counter).find(".upto").text("-");
         else if ( skip + limit > max )
-            $(counter).find("#upto").text( max );
+            $(counter).find(".upto").text( max );
         else
-            $(counter).find("#upto").text(skip + limit);
+            $(counter).find(".upto").text(skip + limit);
 
-        $(counter).find("#count").text(max);
+        $(counter).find(".count").text(max);
 
         debugMode && console.log({
             "max":max, "skip":skip, 
@@ -684,6 +636,12 @@ $(viewer.contentWindow).on("load", function(){
         }
 
         pagerClicked();
+
+    //  Update count. (optional)
+
+        count().then(function(k){
+            max = k; debugMode && console.log("max:", max);
+        });
 
     });
 
@@ -982,6 +940,17 @@ $(viewer.contentWindow).on("load", function(){
 
 
 <script>
+/*
+    async function count(){
+    //  too slow!
+        var k = skip;
+        await collection.find(selectors)
+        .skip(skip).forEach(function(){
+            ++k; debugMode && console.log("k:", k);
+        });
+        return k;
+    }
+*/
 
 /*
     async function count(){
@@ -1049,6 +1018,76 @@ $(viewer.contentWindow).on("load", function(){
         ++k;
     });
     max = k;  debugMode && console.log("max:", max);
+*/
+
+/*
+// from droplistChanged(){
+
+    //  ...  //
+
+    }).then(async function(){
+
+        //  count. TODO: REPLACE async/await from behind compitality.
+
+        var k = skip;
+
+        await collection.find(selectors)
+            .skip(skip).forEach(function(){
+            ++k; debugMode && console.log("k:", k);
+        });
+
+        return k;
+
+    }).then(function(k){
+
+        debugMode && console.log("count:", k);
+
+        //  Set max.
+        max = k;
+
+        //  Get last page.
+        lastpage = parseInt( max / limit );
+
+        //  Set current page.
+        currentpage = 1;  
+        currentindex = 0;
+
+        //  Page buttons numbering.
+        pagebuttons.each(function(i){
+            pagebuttons[i].skip = limit * i;
+            $(pagebuttons[i]).text( i + 1 );
+        });
+
+        //  Current button setup.
+        pagebuttons.removeClass("btn-primary");
+        var currentButton = pagebuttons.get(0);
+        $(currentButton).addClass("btn-primary");
+
+        //  Display info.
+
+        if ( max == 0 )
+            $(counter).find(".from").text("-"); 
+        else
+            $(counter).find(".from").text("1");
+
+        if ( max == 0 )
+            $(counter).find(".upto").text("-"); 
+        else if ( skip + limit > max )
+            $(counter).find(".upto").text( max );
+        else
+            $(counter).find(".upto").text(skip + limit);
+
+        $(counter).find(".count").text(max);
+
+        debugMode && console.log({
+            "max":max, "skip":skip, 
+            "index": currentindex,
+        });
+
+        //  if ( max && skip < max ) get_items();
+
+    });
+
 */
 </script>
 
